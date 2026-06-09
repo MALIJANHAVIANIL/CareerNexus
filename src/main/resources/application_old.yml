@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: careernexus-backend
+  
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/careernexus}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+careernexus:
+  jwt:
+    # 256-bit (32 bytes) hex-encoded key for HS256 algorithm
+    secret: 536f6d6552616e646f6d4c6f6e675365637265744b6579466f724361726565724e65787573506c6174666f726d4261636b656e6432303236
+    expiration: 86400000 # 24 hours in milliseconds
