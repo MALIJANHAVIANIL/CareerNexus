@@ -2,12 +2,12 @@ package com.careernexus;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
-public class CareernexusApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(CareernexusApplication.class, args);
-	}
-
+@EnableJpaAuditing
+public class CareerNexusApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(CareerNexusApplication.class, args);
+    }
 }
