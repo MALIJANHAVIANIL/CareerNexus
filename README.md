@@ -90,7 +90,3 @@ All APIs can be tested using Postman.
 * Resume Analysis
 * Real-Time Messaging Improvements
 * Placement Analytics Dashboard
-
-## Author
-
-Janhavi Anil Mali
