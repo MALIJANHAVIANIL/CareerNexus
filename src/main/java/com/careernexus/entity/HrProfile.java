@@ -25,7 +25,6 @@ public class HrProfile {
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @NotBlank(message = "Designation is required")
-    @Column(nullable = false)
+    @Column
     private String designation;
 }

@@ -77,14 +77,14 @@ export const Input = ({
   const currentType = isPassword ? (showPassword ? "text" : "password") : type;
 
   return (
-    <div className={`flex flex-col w-full ${className}`}>
+    <div className={`flex flex-col w-full ${className}`} style={{ width: "100%" }}>
       {label && (
         <label htmlFor={name} className="block text-sm font-semibold text-gray-700 mb-1.5 font-outfit">
           {label} {required && <span className="text-brand-red">*</span>}
         </label>
       )}
       
-      <div className="relative rounded-lg shadow-sm">
+      <div className="relative rounded-lg shadow-sm w-full" style={{ width: "100%" }}>
         {icon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             {icon}
@@ -92,6 +92,7 @@ export const Input = ({
         )}
         
         <input
+          style={{ width: "100%" }}
           ref={inputRef}
           type={currentType}
           name={name}

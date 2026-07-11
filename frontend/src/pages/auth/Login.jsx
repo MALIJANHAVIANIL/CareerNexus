@@ -76,16 +76,19 @@ export const Login = () => {
 
   const handleDemoAutofill = (demoRole) => {
     setRole(demoRole);
-    setPassword("password");
     setError("");
     if (demoRole === "student") {
       setStudentIdentifier("student@test.com");
+      setPassword("password");
     } else if (demoRole === "alumni") {
       setEmail("alumni@test.com");
+      setPassword("password");
     } else if (demoRole === "hr") {
       setEmail("hr@test.com");
+      setPassword("password");
     } else if (demoRole === "tpo") {
-      setEmail("admin@test.com");
+      setEmail("tpo@college.edu");
+      setPassword("Admin@123");
     }
   };
 

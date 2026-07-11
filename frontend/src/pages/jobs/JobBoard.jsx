@@ -21,160 +21,8 @@ import Card, { CardBody } from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import EmptyState from "../../components/common/EmptyState";
 import confetti from "canvas-confetti";
-
-// Detailed Mock Jobs Data
-const MOCK_JOBS = [
-  {
-    id: "job-1",
-    title: "Associate Software Engineer",
-    company: "Google India",
-    logo: "G",
-    logoBg: "bg-blue-600",
-    location: "Bangalore, India (Hybrid)",
-    type: "Full-time",
-    salary: "24 - 28 LPA",
-    postedDate: "2 days ago",
-    applicantsCount: 142,
-    description: "Google's software engineers develop the next-generation technologies that change how billions of users connect, explore, and interact with information. We're looking for engineers who bring fresh ideas from all areas, including information retrieval, distributed computing, large-scale system design, networking and data storage, security, artificial intelligence, natural language processing, UI design and mobile; the list goes on and is growing every day.",
-    requirements: [
-      "Bachelor's degree in Computer Science, a related technical field, or equivalent practical experience.",
-      "Experience with software development in Java, C++, Python, or Go.",
-      "Experience with frontend technologies (React, Javascript, CSS).",
-      "Familiarity with database systems (SQL, PostgreSQL)."
-    ],
-    benefits: [
-      "Comprehensive medical, dental, and vision insurance plans.",
-      "Top-tier compensation package with performance-based bonuses.",
-      "Complimentary gourmet dining, micro-kitchens, and relaxation spaces.",
-      "Annual education reimbursement program and mental health support."
-    ]
-  },
-  {
-    id: "job-2",
-    title: "Systems Engineer (Digital)",
-    company: "Tata Consultancy Services (TCS)",
-    logo: "T",
-    logoBg: "bg-teal-600",
-    location: "Pune, India (On-site)",
-    type: "Full-time",
-    salary: "7.5 - 9 LPA",
-    postedDate: "5 days ago",
-    applicantsCount: 512,
-    description: "TCS Digital is our premium hiring track aiming to hire top-performing engineering talent for digital technologies. You will work on cutting-edge platforms in Cloud, IoT, Enterprise Architectures, and Big Data. We provide high-quality learning platforms and fast-track career growth paths for passionate engineers.",
-    requirements: [
-      "B.E. / B.Tech / M.E. / M.Tech in Computer Science / IT / Allied branches.",
-      "Minimum 70% or 7.0 CGPA throughout academics.",
-      "Hands-on coding skills in Java, Python, C#, or Node.js.",
-      "Strong understanding of data structures, OOP concepts, and SQL."
-    ],
-    benefits: [
-      "Health insurance plan covering employee and immediate family.",
-      "Access to TCS digital training platforms and certifications.",
-      "Performance-linked incentive program.",
-      "Structured work-life balance initiatives."
-    ]
-  },
-  {
-    id: "job-3",
-    title: "Software Engineer Intern",
-    company: "JPMorgan Chase & Co.",
-    logo: "J",
-    logoBg: "bg-amber-700",
-    location: "Mumbai, India (Remote)",
-    type: "Internship",
-    salary: "12 LPA equivalent",
-    postedDate: "1 day ago",
-    applicantsCount: 89,
-    description: "As a Software Engineer Intern, you will join one of our technology teams working on next-generation financial architectures. You will collaborate with senior developers to build robust services, optimize processing pipelines, and ensure security compliance across global transaction ledgers.",
-    requirements: [
-      "Currently pursuing a Bachelor's degree in Computer Science or IT (Pre-final year).",
-      "Proficient in Java, Python, or JavaScript.",
-      "Familiar with standard version control systems like Git.",
-      "Solid problem-solving skills and willingness to collaborate."
-    ],
-    benefits: [
-      "Competitive monthly internship stipend.",
-      "Direct conversion opportunity to Full-Time Employee (FTE) based on review.",
-      "One-on-one mentorship sessions with senior leaders.",
-      "Access to global resource groups and webinars."
-    ]
-  },
-  {
-    id: "job-4",
-    title: "React Developer",
-    company: "Meta India",
-    logo: "M",
-    logoBg: "bg-blue-500",
-    location: "Remote",
-    type: "Remote",
-    salary: "32 - 36 LPA",
-    postedDate: "3 days ago",
-    applicantsCount: 76,
-    description: "We are seeking an experienced React Developer to build premium interactive features for our social applications. You will be responsible for creating performant, reusable UI components, optimizing frontend bundle sizes, and building intuitive experiences that delight millions of daily active users.",
-    requirements: [
-      "Strong proficiency in React, TypeScript, and state management (Redux, Zustand).",
-      "Familiarity with modern CSS frameworks (Tailwind, Vanilla CSS, Styled Components).",
-      "Experience with responsive web design and client-side optimization.",
-      "Understanding of web vitals, bundle optimization, and lazy-loading."
-    ],
-    benefits: [
-      "100% remote-first policy with home office budget setup.",
-      "Generous health, wellness, and gym allowances.",
-      "Equity grants (RSUs) and competitive base compensation.",
-      "Flexible vacation time and parental leave support."
-    ]
-  },
-  {
-    id: "job-5",
-    title: "Database Administrator",
-    company: "Oracle Corporation",
-    logo: "O",
-    logoBg: "bg-red-600",
-    location: "Hyderabad, India (On-site)",
-    type: "Full-time",
-    salary: "18 - 22 LPA",
-    postedDate: "1 week ago",
-    applicantsCount: 104,
-    description: "As a Database Administrator, you will manage, optimize, and secure Oracle databases supporting enterprise cloud products. You will monitor database health, tune queries, perform backup recoveries, and collaborate with backend developers to scale database designs.",
-    requirements: [
-      "Bachelor's degree in IT, Computer Science, or related domain.",
-      "Strong knowledge of SQL, PL/SQL, database indexing, and query tuning.",
-      "Familiarity with cloud infrastructures (OCI, AWS, Azure).",
-      "Familiarity with replication systems and high-availability database setups."
-    ],
-    benefits: [
-      "Comprehensive employee medical and life insurance programs.",
-      "Flexible work options (hybrid setup depending on week).",
-      "Generous pension contributions and employee stock purchase options.",
-      "Continuous professional training and certification sponsorships."
-    ]
-  },
-  {
-    id: "job-6",
-    title: "AI Engineer",
-    company: "NVIDIA Graphics",
-    logo: "N",
-    logoBg: "bg-green-600",
-    location: "Bangalore, India (On-site)",
-    type: "Full-time",
-    salary: "35 - 40 LPA",
-    postedDate: "4 days ago",
-    applicantsCount: 198,
-    description: "Join NVIDIA as an AI Engineer and contribute to building high-performance deep learning models and CUDA-accelerated systems. You will optimize inference workloads, deploy neural architectures, and design pipelines for generative AI applications.",
-    requirements: [
-      "Strong foundation in Deep Learning, Machine Learning, and Linear Algebra.",
-      "Proficient in Python and frameworks like PyTorch or TensorFlow.",
-      "Experience with CUDA programming or GPU profiling tools is a plus.",
-      "Solid understanding of software patterns and version control."
-    ],
-    benefits: [
-      "Highly competitive salary package with stock options (RSUs).",
-      "State-of-the-art office spaces and high-performance hardware access.",
-      "Extensive wellness, dental, and medical benefits.",
-      "Generous annual bonus based on company performance."
-    ]
-  }
-];
+import { jobsApi } from "../../api/jobs";
+import { applicationsApi } from "../../api/applications";
 
 export const JobBoard = () => {
   const { user } = useAuth();
@@ -190,27 +38,60 @@ export const JobBoard = () => {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedPackageRange, setSelectedPackageRange] = useState(""); // '' | 'low' | 'mid' | 'high'
 
-  // Saved / Applied state persisted locally per user
-  const savedKey = `cn_saved_jobs_${user?.email || "guest"}`;
-  const appliedKey = `cn_applied_jobs_${user?.email || "guest"}`;
-
-  const [savedJobs, setSavedJobs] = useState(() => {
-    const data = localStorage.getItem(savedKey);
-    return data ? JSON.parse(data) : [];
-  });
-
-  const [appliedJobs, setAppliedJobs] = useState(() => {
-    const data = localStorage.getItem(appliedKey);
-    return data ? JSON.parse(data) : [];
-  });
+  const [jobsList, setJobsList] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
+  const [appliedJobs, setAppliedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Selected job for right-pane details
-  const [selectedJob, setSelectedJob] = useState(MOCK_JOBS[0]);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   // Apply Modal state
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
+
+  const loadJobsData = async () => {
+    setLoading(true);
+    try {
+      const [allJobs, backendSaved, backendApplied] = await Promise.all([
+        jobsApi.getAllJobs(),
+        jobsApi.getSavedJobs(),
+        applicationsApi.getStudentApplications()
+      ]);
+
+      setJobsList(allJobs);
+      setSavedJobs(backendSaved.map(j => j.id));
+      setAppliedJobs(backendApplied.map(app => ({
+        jobId: app.jobId,
+        status: app.status?.toLowerCase() || "applied",
+        appliedDate: new Date(app.appliedAt || new Date()).toLocaleDateString(),
+        coverLetter: app.coverLetter || ""
+      })));
+
+      // Sync selected job redirection or default to first job
+      const stateJobId = location.state?.jobId;
+      if (stateJobId) {
+        const found = allJobs.find((j) => String(j.id) === String(stateJobId));
+        if (found) {
+          setSelectedJob(found);
+          window.history.replaceState({}, document.title);
+        } else if (allJobs.length > 0) {
+          setSelectedJob(allJobs[0]);
+        }
+      } else if (allJobs.length > 0) {
+        setSelectedJob(allJobs[0]);
+      }
+    } catch (err) {
+      console.error("Failed to load jobs data from backend:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadJobsData();
+  }, [user]);
 
   // Sync URL tab params
   useEffect(() => {
@@ -222,15 +103,14 @@ export const JobBoard = () => {
 
   // Handle redirect from dashboard with state.jobId
   useEffect(() => {
-    if (location.state?.jobId) {
-      const found = MOCK_JOBS.find((j) => j.id === location.state.jobId);
+    if (location.state?.jobId && jobsList.length > 0) {
+      const found = jobsList.find((j) => String(j.id) === String(location.state.jobId));
       if (found) {
         setSelectedJob(found);
-        // Clear history state to avoid sticking to this job on refresh
         window.history.replaceState({}, document.title);
       }
     }
-  }, [location.state]);
+  }, [location.state, jobsList]);
 
   // Reset selected job when active tab changes
   useEffect(() => {
@@ -242,18 +122,20 @@ export const JobBoard = () => {
     }
   }, [activeTab, search, selectedCompany, selectedLocation, selectedPackageRange, savedJobs, appliedJobs]);
 
-  const handleSaveJob = (jobId, e) => {
+  const handleSaveJob = async (jobId, e) => {
     e.stopPropagation();
-    let updated;
-    if (savedJobs.includes(jobId)) {
-      updated = savedJobs.filter((id) => id !== jobId);
-      showToast("Job removed from bookmarks.", "info");
-    } else {
-      updated = [...savedJobs, jobId];
-      showToast("Job saved to bookmarks!", "success");
+    try {
+      await jobsApi.saveJob(jobId);
+      if (savedJobs.includes(jobId)) {
+        setSavedJobs(prev => prev.filter((id) => id !== jobId));
+        showToast("Job removed from bookmarks.", "info");
+      } else {
+        setSavedJobs(prev => [...prev, jobId]);
+        showToast("Job saved to bookmarks!", "success");
+      }
+    } catch (err) {
+      showToast(err.message || "Failed to update bookmarks.", "error");
     }
-    setSavedJobs(updated);
-    localStorage.setItem(savedKey, JSON.stringify(updated));
   };
 
   const handleApplyClick = () => {
@@ -264,13 +146,17 @@ export const JobBoard = () => {
     setShowApplyModal(true);
   };
 
-  const submitApplication = (e) => {
+  const submitApplication = async (e) => {
     e.preventDefault();
     if (!coverLetter.trim()) return;
 
     setApplying(true);
-    setTimeout(() => {
-      // Confetti celebration
+    try {
+      await applicationsApi.applyToJob({
+        jobId: selectedJob.id,
+        coverLetter: coverLetter.trim()
+      });
+
       confetti({
         particleCount: 120,
         spread: 70,
@@ -278,30 +164,23 @@ export const JobBoard = () => {
         colors: ["#990000", "#111827", "#f87171"]
       });
 
-      const newApp = {
-        jobId: selectedJob.id,
-        status: "applied",
-        appliedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-        coverLetter: coverLetter
-      };
-
-      const updatedApps = [...appliedJobs, newApp];
-      setAppliedJobs(updatedApps);
-      localStorage.setItem(appliedKey, JSON.stringify(updatedApps));
-
       showToast("Application submitted successfully!", "success");
       addNotification("job", "Applied successfully", `You applied for ${selectedJob.title} at ${selectedJob.company}`);
 
       setShowApplyModal(false);
       setCoverLetter("");
+      loadJobsData();
+    } catch (err) {
+      showToast(err.message || "Failed to submit application.", "error");
+    } finally {
       setApplying(false);
-    }, 1000);
+    }
   };
 
   const matchesPackage = (salaryString, selectedRange) => {
     if (!selectedRange) return true;
+    if (!salaryString) return true;
     
-    // Parse salary numbers (e.g. "24 - 28 LPA", "7.5 - 9 LPA", "12 LPA equivalent")
     const nums = salaryString.match(/\d+(\.\d+)?/g);
     if (!nums || nums.length === 0) return true;
     
@@ -318,17 +197,16 @@ export const JobBoard = () => {
   };
 
   const getFilteredJobsForTab = (tab) => {
-    return MOCK_JOBS.filter((job) => {
+    return jobsList.filter((job) => {
       const matchesSearch =
-        job.title.toLowerCase().includes(search.toLowerCase()) ||
-        job.company.toLowerCase().includes(search.toLowerCase()) ||
-        job.description.toLowerCase().includes(search.toLowerCase()) ||
-        job.requirements.some(req => req.toLowerCase().includes(search.toLowerCase()));
+        job.title?.toLowerCase().includes(search.toLowerCase()) ||
+        job.company?.toLowerCase().includes(search.toLowerCase()) ||
+        job.description?.toLowerCase().includes(search.toLowerCase());
 
       const matchesCompany = selectedCompany ? job.company === selectedCompany : true;
       
       const matchesLoc = selectedLocation
-        ? job.location.toLowerCase().includes(selectedLocation.toLowerCase())
+        ? job.location?.toLowerCase().includes(selectedLocation.toLowerCase())
         : true;
 
       const matchesSal = matchesPackage(job.salary, selectedPackageRange);
@@ -349,10 +227,22 @@ export const JobBoard = () => {
   const getAppStatus = (jobId) => appliedJobs.find((a) => a.jobId === jobId)?.status || "";
 
   // Unique companies and locations for selectors
-  const uniqueCompanies = Array.from(new Set(MOCK_JOBS.map((j) => j.company)));
+  const uniqueCompanies = Array.from(new Set(jobsList.map((j) => j.company).filter(Boolean)));
   const uniqueLocations = Array.from(
-    new Set(MOCK_JOBS.map((j) => j.location.split(",")[0].trim()))
+    new Set(jobsList.map((j) => j.location?.split(",")[0].trim()).filter(Boolean))
   );
+
+  const getLogoLetter = (companyName) => companyName ? companyName.charAt(0).toUpperCase() : "J";
+  const getLogoBg = (companyName) => {
+    if (!companyName) return "bg-gray-600";
+    const char = companyName.charAt(0).toLowerCase();
+    if (char >= 'a' && char <= 'd') return "bg-blue-600";
+    if (char >= 'e' && char <= 'h') return "bg-red-650";
+    if (char >= 'i' && char <= 'l') return "bg-green-600";
+    if (char >= 'm' && char <= 'p') return "bg-purple-650";
+    if (char >= 'q' && char <= 't') return "bg-teal-600";
+    return "bg-amber-700";
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -455,12 +345,12 @@ export const JobBoard = () => {
                 className={`cursor-pointer border-gray-150 ${selectedJob?.id === job.id ? "ring-1.5 ring-brand-red bg-red-50/5" : "bg-white"}`}
               >
                 <CardBody className="p-4 flex gap-3">
-                  <div className={`h-11 w-11 rounded-xl flex items-center justify-center font-bold text-white text-lg flex-shrink-0 ${job.logoBg}`}>
-                    {job.logo}
+                  <div className={`h-11 w-11 rounded-xl flex items-center justify-center font-bold text-white text-lg flex-shrink-0 ${getLogoBg(job.company)}`}>
+                    {getLogoLetter(job.company)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-1">
-                      <h4 className="text-xs font-extrabold text-gray-950 truncate font-outfit">{job.title}</h4>
+                      <h4 className="text-xs font-extrabold text-gray-955 truncate font-outfit">{job.title}</h4>
                       <button
                         onClick={(e) => handleSaveJob(job.id, e)}
                         className="text-gray-400 hover:text-brand-red p-0.5 rounded transition flex-shrink-0"
@@ -472,7 +362,7 @@ export const JobBoard = () => {
                         )}
                       </button>
                     </div>
-                    <p className="text-[10px] font-bold text-gray-500 mt-0.5">{job.company}</p>
+                    <p className="text-[10px] font-bold text-gray-550 mt-0.5">{job.company}</p>
                     <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-1 font-sans">
                       <MapPin size={11} /> {job.location}
                     </p>
@@ -483,7 +373,7 @@ export const JobBoard = () => {
                       {hasApplied(job.id) ? (
                         statusBadge(getAppStatus(job.id))
                       ) : (
-                        <span className="text-[9px] font-bold text-gray-400 font-outfit">{job.postedDate}</span>
+                        <span className="text-[9px] font-bold text-gray-400 font-outfit">{new Date(job.createdAt || new Date()).toLocaleDateString()}</span>
                       )}
                     </div>
                   </div>
@@ -499,8 +389,8 @@ export const JobBoard = () => {
             <Card hover={false} className="sticky top-24 bg-white border-gray-150">
               <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center font-extrabold text-white text-2xl shadow-sm ${selectedJob.logoBg}`}>
-                    {selectedJob.logo}
+                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center font-extrabold text-white text-2xl shadow-sm ${getLogoBg(selectedJob.company)}`}>
+                    {getLogoLetter(selectedJob.company)}
                   </div>
                   <div>
                     <h3 className="text-base font-extrabold text-gray-900 font-outfit leading-tight">{selectedJob.title}</h3>
@@ -548,16 +438,16 @@ export const JobBoard = () => {
                   </div>
                   <div>
                     <span className="text-[9px] uppercase font-bold text-gray-400 font-outfit tracking-wide block">Candidates</span>
-                    <span className="text-xs font-bold text-gray-800 mt-0.5 block">{selectedJob.applicantsCount} applied</span>
+                    <span className="text-xs font-bold text-gray-800 mt-0.5 block">{selectedJob.applicantsCount || 0} applied</span>
                   </div>
                 </div>
 
                 {/* About Role */}
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-gray-950 font-outfit uppercase tracking-wide flex items-center gap-1">
+                  <h4 className="text-xs font-bold text-gray-955 font-outfit uppercase tracking-wide flex items-center gap-1">
                     <Briefcase size={13} className="text-brand-red" /> Role Description
                   </h4>
-                  <p className="text-xs text-gray-500 font-sans leading-relaxed">{selectedJob.description}</p>
+                  <p className="text-xs text-gray-550 font-sans leading-relaxed">{selectedJob.description}</p>
                 </div>
 
                 {/* Requirements */}

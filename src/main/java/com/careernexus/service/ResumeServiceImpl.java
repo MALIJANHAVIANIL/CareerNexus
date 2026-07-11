@@ -4,6 +4,7 @@ import com.careernexus.dto.ResumeDTO;
 import com.careernexus.entity.Resume;
 import com.careernexus.entity.StudentProfile;
 import com.careernexus.exception.ResourceNotFoundException;
+import com.careernexus.exception.UnauthorizedException;
 import com.careernexus.repository.ResumeRepository;
 import com.careernexus.repository.StudentProfileRepository;
 import org.springframework.stereotype.Service;
@@ -93,6 +94,10 @@ public class ResumeServiceImpl implements ResumeService {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Resume not found"));
+
+        if (!resume.getStudentProfile().getId().equals(studentUserId)) {
+            throw new UnauthorizedException("You are not authorized to delete this resume");
+        }
 
         resumeRepository.delete(resume);
     }

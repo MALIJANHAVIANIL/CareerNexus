@@ -22,38 +22,6 @@ import Button from "../../components/common/Button";
 import EmptyState from "../../components/common/EmptyState";
 import confetti from "canvas-confetti";
 
-// Detailed Mock Past Events Data
-const MOCK_PAST_EVENTS = [
-  {
-    id: "past-1",
-    title: "GitHub Bootcamp: Git & GitHub Workflow for Collaborations",
-    speaker: "Vikramaditya Roy",
-    speakerTitle: "Senior Architect at Microsoft",
-    date: "May 10, 2026",
-    time: "2:00 PM - 3:30 PM",
-    type: "Placement Prep",
-    location: "Virtual (Recorded Link)",
-    description: "An intensive introductory bootcamp covering basic Git operations, branch merging, rebasing, pull requests, resolving merge conflicts, and GitHub Projects setup.",
-    image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600",
-    registeredUsers: [],
-    isPast: true
-  },
-  {
-    id: "past-2",
-    title: "Introduction to Google Summer of Code (GSoC)",
-    speaker: "Amit Patil",
-    speakerTitle: "AI Research Scientist at NVIDIA",
-    date: "April 15, 2026",
-    time: "5:00 PM - 6:30 PM",
-    type: "Alumni Meetup",
-    location: "Auditorium 1 & Google Meet",
-    description: "Guidance session explaining how to find open-source projects, prepare proposal drafts, communicate with mentors, and successfully complete the GSoC coding cycles.",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600",
-    registeredUsers: [],
-    isPast: true
-  }
-];
-
 export const EventHub = () => {
   const { user } = useAuth();
   const { showToast, addNotification } = useNotifications();
@@ -190,12 +158,24 @@ export const EventHub = () => {
   };
 
   const getFilteredEvents = (tab) => {
-    const listToFilter = tab === "past" ? MOCK_PAST_EVENTS : events;
-    return listToFilter.filter((e) => {
+    return events.filter((e) => {
+      const eventDate = new Date(e.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
+
+      const isPast = eventDate < today;
+
+      if (tab === "past") {
+        if (!isPast) return false;
+      } else {
+        if (isPast) return false;
+      }
+
       const matchesSearch =
-        e.title.toLowerCase().includes(search.toLowerCase()) ||
-        e.speaker.toLowerCase().includes(search.toLowerCase()) ||
-        e.description.toLowerCase().includes(search.toLowerCase());
+        e.title?.toLowerCase().includes(search.toLowerCase()) ||
+        e.speaker?.toLowerCase().includes(search.toLowerCase()) ||
+        e.description?.toLowerCase().includes(search.toLowerCase());
 
       const matchesCategory = selectedCategory ? e.type === selectedCategory : true;
 

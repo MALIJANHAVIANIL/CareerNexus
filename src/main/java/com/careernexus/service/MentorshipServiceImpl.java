@@ -1,18 +1,23 @@
 package com.careernexus.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.careernexus.dto.MentorshipDTO;
-import com.careernexus.entity.*;
+import com.careernexus.entity.AlumniProfile;
+import com.careernexus.entity.MentorshipRequest;
+import com.careernexus.entity.MentorshipStatus;
+import com.careernexus.entity.NotificationType;
+import com.careernexus.entity.StudentProfile;
 import com.careernexus.exception.BadRequestException;
 import com.careernexus.exception.ResourceNotFoundException;
 import com.careernexus.exception.UnauthorizedException;
 import com.careernexus.repository.AlumniProfileRepository;
 import com.careernexus.repository.MentorshipRequestRepository;
 import com.careernexus.repository.StudentProfileRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class MentorshipServiceImpl implements MentorshipService {
@@ -84,13 +89,13 @@ public class MentorshipServiceImpl implements MentorshipService {
     @Override
     @Transactional
     public MentorshipDTO.MentorshipResponseDTO respondToRequest(Long alumniUserId, Long requestId, MentorshipDTO.MentorshipActionDTO action) {
-        AlumniProfile mentor = alumniProfileRepository.findById(alumniUserId)
+        AlumniProfile mentor = alumniProfileRepository.findByUserId(alumniUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mentor profile not found"));
 
         MentorshipRequest request = mentorshipRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mentorship request not found with ID: " + requestId));
 
-        if (!request.getMentor().getId().equals(alumniUserId)) {
+        if (!request.getMentor().getUser().getId().equals(alumniUserId)) {
             throw new UnauthorizedException("You are not authorized to respond to this request");
         }
 
@@ -114,20 +119,21 @@ public class MentorshipServiceImpl implements MentorshipService {
 
         return mapToResponse(saved);
     }
+@Override
+@Transactional(readOnly = true)
+public List<MentorshipDTO.MentorshipResponseDTO> getStudentRequests(Long studentUserId) {
+    return mentorshipRequestRepository.findByStudent_User_Id(studentUserId)
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+}
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<MentorshipDTO.MentorshipResponseDTO> getStudentRequests(Long studentUserId) {
-        return mentorshipRequestRepository.findByStudentId(studentUserId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<MentorshipDTO.MentorshipResponseDTO> getMentorRequests(Long alumniUserId) {
-        return mentorshipRequestRepository.findByMentorId(alumniUserId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
+@Override
+@Transactional(readOnly = true)
+public List<MentorshipDTO.MentorshipResponseDTO> getMentorRequests(Long alumniUserId) {
+    return mentorshipRequestRepository.findByMentor_User_Id(alumniUserId)
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+}
 }

@@ -62,6 +62,19 @@ public class JobController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}")
+@PreAuthorize("hasRole('HR')")
+public ResponseEntity<JobDTO.JobResponse> updateJob(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long id,
+        @Valid @RequestBody JobDTO.JobRequest request) {
+
+    return ResponseEntity.ok(
+            jobService.updateJob(userDetails.getId(), id, request)
+    );
+}
+    
+
     @DeleteMapping("/{jobId}/save")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<Void> unsaveJob(

@@ -35,4 +35,21 @@ public class JobEligibility {
 
     @Column(name = "backlogs_allowed", nullable = false)
     private boolean backlogsAllowed;
+
+    @Column(name = "minimum_tenth_percentage")
+private Double minimumTenthPercentage;
+
+@Column(name = "minimum_twelfth_percentage")
+private Double minimumTwelfthPercentage;
+
+@Column(name = "allowed_gap_years")
+private Integer allowedGapYears;
+
+@Column(name = "bond_required")
+private Boolean bondRequired;
+
+@Column(name = "bond_duration")
+private String bondDuration;
+
+
 }

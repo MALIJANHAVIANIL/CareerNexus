@@ -2,6 +2,7 @@ package com.careernexus.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 
 import java.time.LocalDateTime;
 
@@ -24,5 +25,18 @@ public final class ChatMessageDTO {
         String recipientName,
         String content,
         LocalDateTime timestamp
+    ) {}
+
+    public record ConversationResponse(
+        String chatId,
+        Long studentId,
+        String studentName,
+        String studentAvatar,
+        String studentTitle,
+        Long mentorId,
+        String mentorName,
+        String mentorAvatar,
+        String mentorTitle,
+        List<ChatResponse> messages
     ) {}
 }

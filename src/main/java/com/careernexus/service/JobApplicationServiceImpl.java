@@ -84,25 +84,26 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         JobEligibility eligibility = job.getJobEligibility();
         if (eligibility != null) {
             // CGPA check
-            if (eligibility.getMinimumCgpa() != null && student.getCgpa() < eligibility.getMinimumCgpa()) {
+            double studentCgpa = student.getCgpa() != null ? student.getCgpa() : 0.0;
+            if (eligibility.getMinimumCgpa() != null && studentCgpa < eligibility.getMinimumCgpa()) {
                 throw new BadRequestException("You do not meet the minimum CGPA requirement of " + eligibility.getMinimumCgpa());
             }
 
             // Department check
             if (eligibility.getEligibleDepartments() != null && !eligibility.getEligibleDepartments().isBlank()) {
                 String deps = eligibility.getEligibleDepartments().toLowerCase();
-                String studentDep = student.getDepartment().toLowerCase();
-                if (!deps.contains(studentDep)) {
-                    throw new BadRequestException("Your department (" + student.getDepartment() + ") is not eligible for this job");
+                String studentDep = student.getDepartment() != null ? student.getDepartment().toLowerCase() : "";
+                if (studentDep.isEmpty() || !deps.contains(studentDep)) {
+                    throw new BadRequestException("Your department (" + (student.getDepartment() != null ? student.getDepartment() : "N/A") + ") is not eligible for this job");
                 }
             }
 
             // Graduation Year check
             if (eligibility.getGraduationYears() != null && !eligibility.getGraduationYears().isBlank()) {
                 String years = eligibility.getGraduationYears();
-                String studentYear = String.valueOf(student.getGraduationYear());
-                if (!years.contains(studentYear)) {
-                    throw new BadRequestException("Your graduation year (" + studentYear + ") is not eligible for this job");
+                String studentYear = student.getGraduationYear() != null ? String.valueOf(student.getGraduationYear()) : "";
+                if (studentYear.isEmpty() || !years.contains(studentYear)) {
+                    throw new BadRequestException("Your graduation year (" + (studentYear.isEmpty() ? "N/A" : studentYear) + ") is not eligible for this job");
                 }
             }
         }

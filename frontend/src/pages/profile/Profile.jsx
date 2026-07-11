@@ -126,26 +126,35 @@ export const Profile = () => {
   const [projects, setProjects] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [certifications, setCertifications] = useState([]);
+  const [partnerCompanies, setPartnerCompanies] = useState([]);
 
   // Social links and resume states
   const [socials, setSocials] = useState(() => {
     const data = localStorage.getItem(`cn_socials_${user?.email}`);
-    return data ? JSON.parse(data) : {
-      linkedin: "https://linkedin.com/in/janhavi-mali",
-      github: "https://github.com/MALIJANHAVIANIL",
-      portfolio: "https://janhavimali.dev"
-    };
+    if (data) return JSON.parse(data);
+    if (user?.email && (user.email === "janhavi@test.com" || user.email.includes("janhavi"))) {
+      return {
+        linkedin: "https://linkedin.com/in/janhavi-mali",
+        github: "https://github.com/MALIJANHAVIANIL",
+        portfolio: "https://janhavimali.dev"
+      };
+    }
+    return { linkedin: "", github: "", portfolio: "" };
   });
   const [isEditingSocials, setIsEditingSocials] = useState(false);
   const [socialsForm, setSocialsForm] = useState({ linkedin: "", github: "", portfolio: "" });
 
   const [resumeFile, setResumeFile] = useState(() => {
     const data = localStorage.getItem(`cn_resume_${user?.email}`);
-    return data ? JSON.parse(data) : {
-      name: "Janhavi_Mali_Resume.pdf",
-      size: "245 KB",
-      uploaded: "June 10, 2026"
-    };
+    if (data) return JSON.parse(data);
+    if (user?.email && (user.email === "janhavi@test.com" || user.email.includes("janhavi"))) {
+      return {
+        name: "Janhavi_Mali_Resume.pdf",
+        size: "245 KB",
+        uploaded: "June 10, 2026"
+      };
+    }
+    return null;
   });
   const [uploadingResume, setUploadingResume] = useState(false);
 
@@ -226,6 +235,14 @@ export const Profile = () => {
           setCgpa(p.cgpa || 0.0);
           setGraduationYear(p.graduationYear || 2027);
           setSkillsList(p.skills ? p.skills.split(",").map(s => s.trim()).filter(Boolean) : []);
+
+          // 1b. Fetch partner companies
+          try {
+            const compRes = await apiClient.get("/api/companies");
+            setPartnerCompanies(compRes.data || []);
+          } catch (compErr) {
+            console.warn("Failed to load partner companies on profile:", compErr);
+          }
         }
 
         // 2. Fetch from local storage expanded profile
@@ -590,9 +607,16 @@ export const Profile = () => {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="bg-white p-8 rounded-2xl border border-gray-150 shadow-sm relative overflow-hidden">
           <div className="flex items-center gap-6">
-            <div className="relative">
+            <label htmlFor="avatar-upload-input" className="relative group cursor-pointer flex-shrink-0 block">
+              <input
+                type="file"
+                id="avatar-upload-input"
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
               {user?.avatar && (user.avatar.startsWith("data:application/pdf") || user.avatarType === "application/pdf") ? (
-                <div className="h-24 w-24 rounded-2xl border-2 border-red-200 bg-red-50 flex flex-col items-center justify-center text-brand-red gap-1 relative">
+                <div className="h-24 w-24 rounded-2xl border-2 border-red-200 bg-red-50 flex flex-col items-center justify-center text-brand-red gap-1 group-hover:opacity-85 transition-opacity relative">
                   <FileText size={32} />
                   <span className="text-[9px] font-extrabold uppercase tracking-wide bg-brand-red text-white px-1.5 py-0.5 rounded">PDF Photo</span>
                 </div>
@@ -600,10 +624,13 @@ export const Profile = () => {
                 <img
                   src={user?.avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
                   alt={user?.name}
-                  className="h-24 w-24 rounded-2xl object-cover border-2 border-brand-red/10"
+                  className="h-24 w-24 rounded-2xl object-cover border-2 border-brand-red/10 group-hover:opacity-85 transition-opacity"
                 />
               )}
-            </div>
+              <div className="absolute inset-0 bg-black/20 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Camera size={18} className="text-white" />
+              </div>
+            </label>
             <div className="space-y-1">
               <span className="inline-flex text-[9px] font-extrabold bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase font-outfit">
                 {user?.role} Account
@@ -1073,28 +1100,35 @@ export const Profile = () => {
               </label>
             </div>
 
-            <div className="p-4 bg-gray-50 border border-gray-150 rounded-xl space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-red-50 border border-brand-red/10 rounded-xl flex items-center justify-center text-brand-red font-black text-xs font-outfit">
-                  PDF
+            {resumeFile ? (
+              <div className="p-4 bg-gray-50 border border-gray-150 rounded-xl space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-red-50 border border-brand-red/10 rounded-xl flex items-center justify-center text-brand-red font-black text-xs font-outfit">
+                    PDF
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-bold text-gray-900 truncate font-outfit">{resumeFile.name}</h4>
+                    <p className="text-[10px] text-gray-400 font-sans mt-0.5">{resumeFile.size} • Uploaded {resumeFile.uploaded}</p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-bold text-gray-900 truncate font-outfit">{resumeFile.name}</h4>
-                  <p className="text-[10px] text-gray-400 font-sans mt-0.5">{resumeFile.size} • Uploaded {resumeFile.uploaded}</p>
-                </div>
-              </div>
 
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => {
-                    showToast("Downloading resume PDF...", "success");
-                  }}
-                  className="flex-1 py-1.5 bg-white border border-gray-200 hover:border-brand-red text-brand-red text-[10px] font-bold rounded-lg transition-colors font-outfit text-center"
-                >
-                  Download File
-                </button>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      showToast("Downloading resume PDF...", "success");
+                    }}
+                    className="flex-1 py-1.5 bg-white border border-gray-200 hover:border-brand-red text-brand-red text-[10px] font-bold rounded-lg transition-colors font-outfit text-center"
+                  >
+                    Download File
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-4 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                <p className="text-xs text-gray-400 font-medium font-sans">No placement resume uploaded yet.</p>
+                <label htmlFor="resume-upload-input" className="mt-2 text-xs font-bold text-brand-red hover:underline cursor-pointer block">Upload Resume</label>
+              </div>
+            )}
           </div>
 
           {/* Social Profiles Card */}
@@ -1152,6 +1186,11 @@ export const Profile = () => {
                   </button>
                 </div>
               </form>
+            ) : (!socials.linkedin && !socials.github && !socials.portfolio) ? (
+              <div className="text-center py-4 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                <p className="text-xs text-gray-400 font-medium font-sans">No online profiles listed yet.</p>
+                <button onClick={handleEditSocials} className="mt-2 text-xs font-bold text-brand-red hover:underline">Add Links</button>
+              </div>
             ) : (
               <div className="space-y-3">
                 {socials.linkedin && (
@@ -1183,14 +1222,12 @@ export const Profile = () => {
                 )}
               </div>
             )}
-          </div>
-
-          {/* Certifications */}
+                    {/* Certifications */}
           <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Award className="text-brand-red h-4.5 w-4.5" />
-                <h3 className="text-sm font-bold text-gray-950 font-outfit uppercase tracking-wider">Certifications</h3>
+                <h3 className="text-sm font-bold text-gray-955 font-outfit uppercase tracking-wider">Certifications</h3>
               </div>
               <button 
                 onClick={() => openCertificationModal(null)}
@@ -1227,7 +1264,42 @@ export const Profile = () => {
             )}
           </div>
 
-        </div>
+          {/* Recruitment Partners Card */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <Briefcase className="text-brand-red h-4.5 w-4.5" />
+              <h3 className="text-sm font-bold text-gray-955 font-outfit uppercase tracking-wider">Recruitment Partners</h3>
+            </div>
+            
+            {partnerCompanies.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {partnerCompanies.map((c) => (
+                  <div key={c.id} className="p-3 bg-gray-50 border border-gray-150 rounded-xl flex flex-col justify-between hover:bg-gray-100/50 transition-colors">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 font-outfit truncate">{c.name}</h4>
+                      <span className="inline-flex text-[8px] font-extrabold bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-outfit mt-1 uppercase">
+                        {c.industry || "Technology"}
+                      </span>
+                    </div>
+                    {c.website && (
+                      <a 
+                        href={c.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-[9px] font-bold text-brand-red hover:underline mt-2 inline-flex items-center gap-0.5 font-sans"
+                      >
+                        Visit Website <ExternalLink size={9} />
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-gray-400 font-medium text-center py-4 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No partner companies listed yet.</p>
+            )}
+          </div>
+
+        </div>    </div>
 
       </div>
 

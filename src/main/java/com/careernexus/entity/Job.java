@@ -11,6 +11,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 @Entity
 @Table(name = "jobs")
@@ -51,6 +56,18 @@ public class Job {
     @Column(name = "salary_range")
     private String salaryRange;
 
+    @Column(name = "experience")
+private String experience;
+
+@Column(name = "work_mode")
+private String workMode;
+
+@Column(name = "openings")
+private Integer openings;
+
+@Column(name = "company_logo")
+private String companyLogo;
+
     @NotNull(message = "Job type is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "job_type", nullable = false)
@@ -75,4 +92,28 @@ public class Job {
     @Builder.Default
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SavedJob> savedJobs = new ArrayList<>();
+
+    @Builder.Default
+@OneToMany(
+        mappedBy = "job",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+private List<JobSkill> jobSkills = new ArrayList<>();
+
+@Builder.Default
+@OneToMany(
+        mappedBy = "job",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+private List<JobRequirement> jobRequirements = new ArrayList<>();
+
+@Builder.Default
+@OneToMany(
+        mappedBy = "job",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+private List<JobBenefit> jobBenefits = new ArrayList<>();
 }

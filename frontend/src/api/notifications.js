@@ -1,56 +1,56 @@
-import { mockNotifications } from "./mockData";
+import apiClient from "./client";
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const getStoredNotifications = () => {
-  const notifs = localStorage.getItem("cn_notifications");
-  if (!notifs) {
-    localStorage.setItem("cn_notifications", JSON.stringify(mockNotifications));
-    return mockNotifications;
-  }
-  return JSON.parse(notifs);
+const mapBackendNotificationToFrontend = (n) => {
+  if (!n) return null;
+  const typeTitles = {
+    CHAT: "New Message",
+    APPLICATION_STATUS: "Application Update",
+    SYSTEM: "System Alert"
+  };
+  return {
+    id: n.id.toString(),
+    title: typeTitles[n.type] || "Notification",
+    text: n.message,
+    message: n.message,
+    read: n.isRead,
+    timestamp: n.createdAt ? n.createdAt.split("T")[0] : "Just now",
+    type: n.type ? n.type.toLowerCase() : "system",
+    category: n.type ? n.type.toLowerCase() : "system"
+  };
 };
 
 export const notificationsApi = {
   getNotifications: async () => {
-    await delay(300);
-    const userStr = localStorage.getItem("cn_user");
-    if (!userStr) return [];
-    const user = JSON.parse(userStr);
-
-    const notifs = getStoredNotifications();
-    return notifs.filter((n) => n.userId === user.id || n.userId === "all" || !n.userId);
+    const res = await apiClient.get("/api/notifications");
+    return (res.data || []).map(mapBackendNotificationToFrontend);
   },
 
   markAsRead: async (notifId) => {
-    await delay(100);
-    const notifs = getStoredNotifications();
-    const idx = notifs.findIndex((n) => n.id === notifId);
-    if (idx > -1) {
-      notifs[idx].read = true;
-      localStorage.setItem("cn_notifications", JSON.stringify(notifs));
-    }
-    return notifs;
+    await apiClient.put(`/api/notifications/${notifId}/read`);
+    return await notificationsApi.getNotifications();
   },
 
   markAllAsRead: async () => {
-    await delay(200);
-    const notifs = getStoredNotifications();
-    const updated = notifs.map((n) => ({ ...n, read: true }));
-    localStorage.setItem("cn_notifications", JSON.stringify(updated));
-    return updated;
+    const list = await notificationsApi.getNotifications();
+    for (const notif of list) {
+      if (!notif.read) {
+        try {
+          await apiClient.put(`/api/notifications/${notif.id}/read`);
+        } catch (err) {
+          console.warn("Failed to mark notification as read:", err);
+        }
+      }
+    }
+    return await notificationsApi.getNotifications();
   },
 
   addNotification: async (notificationData) => {
-    const notifs = getStoredNotifications();
-    const newNotif = {
+    // Client-side addition for immediate local UI preview, usually done by backend trigger
+    return {
       id: `notif-${Date.now()}`,
       read: false,
       timestamp: "Just now",
       ...notificationData
     };
-    notifs.unshift(newNotif);
-    localStorage.setItem("cn_notifications", JSON.stringify(notifs));
-    return newNotif;
   }
 };

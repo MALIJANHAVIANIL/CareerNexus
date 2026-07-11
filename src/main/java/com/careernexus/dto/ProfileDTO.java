@@ -18,22 +18,20 @@ public final class ProfileDTO {
     ) {}
 
     public record StudentProfileRequest(
-        @NotBlank(message = "Roll number is required")
         String rollNumber,
-
-        @NotBlank(message = "Department is required")
         String department,
-
-        @NotNull(message = "CGPA is required")
-        @DecimalMin(value = "0.0")
-        @DecimalMax(value = "10.0")
         Double cgpa,
-
-        @NotNull(message = "Graduation year is required")
-        @Min(1900)
         Integer graduationYear,
-
-        String skills
+        String skills,
+        String summary,
+        String internships,
+        String projects,
+        String languages,
+        String certifications,
+        String socials,
+        String resumeName,
+        String resumeSize,
+        String resumeUploaded
     ) {}
 
     public record StudentProfileResponse(
@@ -43,24 +41,30 @@ public final class ProfileDTO {
         String department,
         Double cgpa,
         Integer graduationYear,
-        String skills
+        String skills,
+        String summary,
+        String internships,
+        String projects,
+        String languages,
+        String certifications,
+        String socials,
+        String resumeName,
+        String resumeSize,
+        String resumeUploaded
     ) {}
 
     public record AlumniProfileRequest(
-        @NotBlank(message = "Current company is required")
         String currentCompany,
-
-        @NotBlank(message = "Current role is required")
         String currentRole,
-
-        @NotNull(message = "Graduation year is required")
-        @Min(1900)
         Integer graduationYear,
-
-        @NotBlank(message = "Department is required")
         String department,
-
-        String industry
+        String industry,
+        String summary,
+        String internships,
+        String projects,
+        String languages,
+        String certifications,
+        String socials
     ) {}
 
     public record AlumniProfileResponse(
@@ -70,12 +74,18 @@ public final class ProfileDTO {
         String currentRole,
         Integer graduationYear,
         String department,
-        String industry
+        String industry,
+        String summary,
+        String internships,
+        String projects,
+        String languages,
+        String certifications,
+        String socials
     ) {}
 
     public record HrProfileRequest(
-        @NotNull(message = "Company ID is required")
         Long companyId,
+        String companyName,
 
         @NotBlank(message = "Designation is required")
         String designation

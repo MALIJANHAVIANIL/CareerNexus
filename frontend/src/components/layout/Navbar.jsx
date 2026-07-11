@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, LogOut, User, Menu, X, CheckSquare, Sparkles } from "lucide-react";
+import { Bell, LogOut, User, Menu, X, CheckSquare, Sparkles, Sun, Moon } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,23 @@ export const Navbar = ({ onMenuClick, showSidebarButton = true }) => {
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const navigate = useNavigate();
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("cn_theme") || "light";
+  });
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("cn_theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const notifRef = useRef(null);
   const profileRef = useRef(null);
@@ -46,7 +63,7 @@ export const Navbar = ({ onMenuClick, showSidebarButton = true }) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-150 py-3.5 px-4 md:px-6 flex items-center justify-between">
+    <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-150 py-3.5 px-4 md:px-6 flex items-center justify-between">
       {/* Left side: Hamburger on mobile, Brand on desktop */}
       <div className="flex items-center gap-3">
         {showSidebarButton && (
@@ -65,6 +82,15 @@ export const Navbar = ({ onMenuClick, showSidebarButton = true }) => {
 
       {/* Right side: Bell & User actions */}
       <div className="flex items-center gap-4">
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 text-gray-500 hover:text-brand-black hover:bg-gray-100 rounded-xl transition-colors focus:outline-none"
+          title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
+        >
+          {theme === "light" ? <Moon size={20} /> : <Sun size={20} className="text-amber-500" />}
+        </button>
+
         {/* Notification Bell */}
         <div ref={notifRef} className="relative">
           <button

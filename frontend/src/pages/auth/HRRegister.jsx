@@ -17,6 +17,8 @@ export const HRRegister = () => {
   const [email, setEmail] = useState("");
   const [designation, setDesignation] = useState("");
   const [companyId, setCompanyId] = useState("");
+  const [isCustomCompany, setIsCustomCompany] = useState(false);
+  const [customCompanyName, setCustomCompanyName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -37,9 +39,14 @@ export const HRRegister = () => {
         setCompanies(response.data || []);
         if (response.data && response.data.length > 0) {
           setCompanyId(response.data[0].id.toString());
+        } else {
+          setCompanyId("other");
+          setIsCustomCompany(true);
         }
       } catch (err) {
         console.error("Failed to load companies: ", err);
+        setCompanyId("other");
+        setIsCustomCompany(true);
       } finally {
         setCompaniesLoading(false);
       }
@@ -79,8 +86,13 @@ export const HRRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email || !designation || !companyId || !password || !confirmPassword) {
+    if (!name || !email || !designation || (!companyId && !customCompanyName) || !password || !confirmPassword) {
       setError("All fields are required.");
+      return;
+    }
+
+    if (isCustomCompany && !customCompanyName.trim()) {
+      setError("Please specify your company name.");
       return;
     }
 
@@ -103,6 +115,8 @@ export const HRRegister = () => {
         email,
         designation,
         companyId,
+        companyName: customCompanyName,
+        isCustomCompany,
         password
       });
 
@@ -206,25 +220,47 @@ export const HRRegister = () => {
                 </div>
                 <select
                   value={companyId}
-                  onChange={(e) => setCompanyId(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCompanyId(val);
+                    if (val === "other" || val === "") {
+                      setIsCustomCompany(true);
+                    } else {
+                      setIsCustomCompany(false);
+                    }
+                  }}
                   className="block w-full pl-10 pr-3 py-2.5 text-xs text-brand-black bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-red focus:border-brand-red font-sans"
                   required
                   disabled={companiesLoading}
                 >
                   {companiesLoading ? (
                     <option>Loading companies...</option>
-                  ) : companies.length === 0 ? (
-                    <option value="">No companies available. Please seed database.</option>
                   ) : (
-                    companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.industry})
-                      </option>
-                    ))
+                    <>
+                      {companies.length === 0 && <option value="">Select or Type a Company</option>}
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.industry})
+                        </option>
+                      ))}
+                      <option value="other">Other (Add New Company)</option>
+                    </>
                   )}
                 </select>
               </div>
             </div>
+
+            {isCustomCompany && (
+              <Input
+                label="New Company Name"
+                name="customCompanyName"
+                placeholder="e.g. Stripe Inc."
+                value={customCompanyName}
+                onChange={(e) => setCustomCompanyName(e.target.value)}
+                icon={<Building size={16} />}
+                required
+              />
+            )}
 
             <Input
               label="Password"

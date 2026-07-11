@@ -1,53 +1,80 @@
-import { mockInterviews } from "./mockData";
+import apiClient from "./client";
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const mapBackendInterviewToFrontend = (intExp) => {
+  if (!intExp) return null;
+  const difficultyMap = {
+    EASY: "Easy",
+    MEDIUM: "Medium",
+    HARD: "Hard"
+  };
+  const diffBadgeMap = {
+    EASY: "bg-green-100 text-green-700 border-green-200",
+    MEDIUM: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    HARD: "bg-red-100 text-red-700 border-red-200"
+  };
 
-const getStoredInterviews = () => {
-  const ints = localStorage.getItem("cn_interviews");
-  if (!ints) {
-    localStorage.setItem("cn_interviews", JSON.stringify(mockInterviews));
-    return mockInterviews;
-  }
-  return JSON.parse(ints);
+  return {
+    id: intExp.id.toString(),
+    company: intExp.companyName,
+    role: intExp.role,
+    difficulty: difficultyMap[intExp.difficulty] || "Medium",
+    difficultyColor: diffBadgeMap[intExp.difficulty] || "bg-yellow-100 text-yellow-700 border-yellow-200",
+    rounds: intExp.rounds || 3,
+    experience: intExp.experience,
+    authorName: intExp.isAnonymous ? "Anonymous User" : (intExp.userName || "Alumni"),
+    authorRole: "Alumni",
+    date: intExp.createdAt ? intExp.createdAt.split("T")[0] : "Just now"
+  };
 };
 
 export const interviewsApi = {
   getInterviews: async (companyFilter = "") => {
-    await delay(300);
-    const ints = getStoredInterviews();
+    const res = await apiClient.get("/api/interview-experiences");
+    let list = (res.data || []).map(mapBackendInterviewToFrontend);
     if (companyFilter) {
-      return ints.filter((i) => i.company.toLowerCase().includes(companyFilter.toLowerCase()));
+      list = list.filter((i) =>
+        i.company.toLowerCase().includes(companyFilter.toLowerCase())
+      );
     }
-    return ints;
+    return list;
   },
 
   shareExperience: async (expData) => {
-    await delay(800);
-    const userStr = localStorage.getItem("cn_user");
-    if (!userStr) throw new Error("Please log in to share an experience.");
-    const user = JSON.parse(userStr);
+    // 1. Resolve Company Name to companyId
+    let companyId = null;
+    const compsRes = await apiClient.get("/api/companies");
+    const matchedComp = (compsRes.data || []).find(
+      (c) => c.name.toLowerCase() === expData.company.toLowerCase()
+    );
 
-    const ints = getStoredInterviews();
-    
-    // Choose diff badge color
-    let diffColor = "bg-green-100 text-green-700 border-green-200";
-    if (expData.difficulty === "Medium") {
-      diffColor = "bg-yellow-100 text-yellow-700 border-yellow-200";
-    } else if (expData.difficulty === "Hard") {
-      diffColor = "bg-red-100 text-red-700 border-red-200";
+    if (matchedComp) {
+      companyId = matchedComp.id;
+    } else {
+      // Create company first
+      const newCompRes = await apiClient.post("/api/companies", {
+        name: expData.company,
+        industry: "Tech",
+        website: "https://careernexus.com"
+      });
+      companyId = newCompRes.data.id;
     }
 
-    const newExp = {
-      id: `int-${Date.now()}`,
-      authorName: user.name,
-      authorRole: user.role === "alumni" ? "Alumni" : "Student",
-      date: new Date().toISOString().split("T")[0],
-      difficultyColor: diffColor,
-      ...expData
+    const diffMapReverse = {
+      Easy: "EASY",
+      Medium: "MEDIUM",
+      Hard: "HARD"
     };
 
-    ints.unshift(newExp);
-    localStorage.setItem("cn_interviews", JSON.stringify(ints));
-    return newExp;
+    const payload = {
+      companyId: companyId,
+      role: expData.role,
+      experience: expData.experience,
+      difficulty: diffMapReverse[expData.difficulty] || "MEDIUM",
+      rounds: parseInt(expData.rounds, 10) || 3,
+      isAnonymous: !!expData.isAnonymous
+    };
+
+    const res = await apiClient.post("/api/interview-experiences", payload);
+    return mapBackendInterviewToFrontend(res.data);
   }
 };

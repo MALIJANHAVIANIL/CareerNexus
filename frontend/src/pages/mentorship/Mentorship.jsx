@@ -20,88 +20,7 @@ import Card, { CardBody } from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import EmptyState from "../../components/common/EmptyState";
 import confetti from "canvas-confetti";
-
-// Detailed Mock Alumni Mentors Data
-const MOCK_MENTORS = [
-  {
-    id: "mentor-1",
-    name: "Vikramaditya Roy",
-    company: "Microsoft Corporation",
-    designation: "Senior Software Architect",
-    branch: "Computer Engineering",
-    year: 2020,
-    experience: "6+ years",
-    domain: "Backend Development",
-    skills: ["System Design", "Java", "Kubernetes", "Microservices"],
-    bio: "Passionate architect with 6+ years of experience building scalable microservices at Microsoft. I can assist with system design concepts, back-end development roadmaps, and resume reviews.",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-2",
-    name: "Pooja Deshmukh",
-    company: "Amazon Web Services (AWS)",
-    designation: "Cloud Infrastructure Engineer",
-    branch: "Information Technology",
-    year: 2022,
-    experience: "4 years",
-    domain: "Cloud Computing",
-    skills: ["AWS", "Terraform", "CI/CD", "DevOps"],
-    bio: "Cloud Engineer specializing in infrastructure-as-code and serverless deployments. Happy to guide IT juniors on cloud certifications, DevOps practices, and landing tech roles.",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-3",
-    name: "Amit Patil",
-    company: "NVIDIA Graphics",
-    designation: "AI Research Scientist",
-    branch: "ENTC",
-    year: 2018,
-    experience: "8 years",
-    domain: "Artificial Intelligence",
-    skills: ["PyTorch", "Python", "Computer Vision", "Generative AI"],
-    bio: "AI researcher focusing on computer vision models and generative architectures at NVIDIA. Mentoring students interested in machine learning foundations and deep learning deployments.",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-4",
-    name: "Janhavi Kulkarni",
-    company: "Google India",
-    designation: "Frontend Engineer",
-    branch: "Computer Engineering",
-    year: 2021,
-    experience: "5 years",
-    domain: "Frontend Development",
-    skills: ["React", "TypeScript", "Next.js", "Web Performance"],
-    bio: "React developer at Google. I love building smooth, responsive user interfaces and optimizing web performance. Let's connect for mock frontend interviews and UI portfolio reviews.",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-5",
-    name: "Rohan Mehta",
-    company: "JPMorgan Chase & Co.",
-    designation: "Software Engineer",
-    branch: "Computer Engineering",
-    year: 2023,
-    experience: "3 years",
-    domain: "Fintech & Databases",
-    skills: ["Spring Boot", "SQL", "Docker", "PostgreSQL"],
-    bio: "Full stack developer working in the global transaction division at JP Morgan. I can help with Spring Boot foundations, SQL optimization, and preparing for fintech campus placements.",
-    avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-6",
-    name: "Sneha Nair",
-    company: "Meta India",
-    designation: "Technical Product Manager",
-    branch: "Information Technology",
-    year: 2019,
-    experience: "7 years",
-    domain: "Product Management",
-    skills: ["Product Strategy", "Agile", "A/B Testing", "Analytics"],
-    bio: "Technical PM at Meta. I bridge the gap between engineering teams and business goals. Let's talk about PM career transitions, product design case studies, and execution metrics.",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
-  }
-];
+import { mentorshipApi } from "../../api/mentorship";
 
 export const Mentorship = () => {
   const { user } = useAuth();
@@ -116,22 +35,59 @@ export const Mentorship = () => {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedDomain, setSelectedDomain] = useState("");
 
-  // Mentorship requests persisted locally per user
-  const requestsKey = `cn_mentorship_requests_${user?.email || "guest"}`;
-  
-  const [requests, setRequests] = useState(() => {
-    const data = localStorage.getItem(requestsKey);
-    return data ? JSON.parse(data) : [];
-  });
+  const [mentorsList, setMentorsList] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Selected mentor for details pane
-  const [selectedMentor, setSelectedMentor] = useState(MOCK_MENTORS[0]);
+  const [selectedMentor, setSelectedMentor] = useState(null);
 
   // Request Modal state
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestType, setRequestType] = useState("guidance"); // 'resume' | 'mock' | 'guidance' | 'project'
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+
+  const loadMentorsData = async () => {
+    setLoading(true);
+    try {
+      const [allMentors, backendRequests] = await Promise.all([
+        mentorshipApi.getMentors(),
+        mentorshipApi.getRequests("student")
+      ]);
+
+      setMentorsList(allMentors);
+      setRequests(backendRequests.map(r => ({
+        id: r.id,
+        mentorId: r.mentorId,
+        type: r.type,
+        message: r.message,
+        status: r.status?.toLowerCase() || "pending",
+        requestedDate: new Date(r.requestedAt || new Date()).toLocaleDateString()
+      })));
+
+      const stateMentorId = location.state?.mentorId;
+      if (stateMentorId) {
+        const found = allMentors.find(m => String(m.id) === String(stateMentorId));
+        if (found) {
+          setSelectedMentor(found);
+          window.history.replaceState({}, document.title);
+        } else if (allMentors.length > 0) {
+          setSelectedJob(allMentors[0]);
+        }
+      } else if (allMentors.length > 0) {
+        setSelectedMentor(allMentors[0]);
+      }
+    } catch (err) {
+      console.error("Failed to load mentorship data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMentorsData();
+  }, [user]);
 
   // Sync URL tab params
   useEffect(() => {
@@ -142,15 +98,14 @@ export const Mentorship = () => {
 
   // Handle redirect from dashboard with state.mentorId
   useEffect(() => {
-    if (location.state?.mentorId) {
-      const found = MOCK_MENTORS.find((m) => m.id === location.state.mentorId);
+    if (location.state?.mentorId && mentorsList.length > 0) {
+      const found = mentorsList.find((m) => String(m.id) === String(location.state.mentorId));
       if (found) {
         setSelectedMentor(found);
-        // Clear history state to avoid sticking to this mentor on refresh
         window.history.replaceState({}, document.title);
       }
     }
-  }, [location.state]);
+  }, [location.state, mentorsList]);
 
   // Reset selected mentor when active tab/filters change
   useEffect(() => {
@@ -170,13 +125,18 @@ export const Mentorship = () => {
     setShowRequestModal(true);
   };
 
-  const submitRequest = (e) => {
+  const submitRequest = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
     setSending(true);
-    setTimeout(() => {
-      // Confetti celebration
+    try {
+      await mentorshipApi.sendMentorshipRequest({
+        mentorId: selectedMentor.id,
+        type: requestType,
+        message: message.trim()
+      });
+
       confetti({
         particleCount: 100,
         spread: 60,
@@ -184,34 +144,25 @@ export const Mentorship = () => {
         colors: ["#990000", "#111827", "#f59e0b"]
       });
 
-      const newRequest = {
-        mentorId: selectedMentor.id,
-        type: requestType,
-        message: message,
-        status: "pending",
-        requestedDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-      };
-
-      const updatedRequests = [...requests, newRequest];
-      setRequests(updatedRequests);
-      localStorage.setItem(requestsKey, JSON.stringify(updatedRequests));
-
       showToast(`Mentorship request sent to ${selectedMentor.name}!`, "success");
       addNotification("mentor", "Mentorship Requested", `Requested mentorship with ${selectedMentor.name} for ${requestType === 'resume' ? 'Resume Review' : requestType === 'mock' ? 'Mock Interview' : requestType === 'project' ? 'Project Review' : 'Career Guidance'}`);
 
       setShowRequestModal(false);
       setMessage("");
+      loadMentorsData();
+    } catch (err) {
+      showToast(err.message || "Failed to send request.", "error");
+    } finally {
       setSending(false);
-    }, 1000);
+    }
   };
 
   const getFilteredMentorsForTab = (tab) => {
-    return MOCK_MENTORS.filter((mentor) => {
+    return mentorsList.filter((mentor) => {
       const matchesSearch =
-        mentor.name.toLowerCase().includes(search.toLowerCase()) ||
-        mentor.company.toLowerCase().includes(search.toLowerCase()) ||
-        mentor.domain.toLowerCase().includes(search.toLowerCase()) ||
-        mentor.skills.some(skill => skill.toLowerCase().includes(search.toLowerCase()));
+        mentor.name?.toLowerCase().includes(search.toLowerCase()) ||
+        mentor.company?.toLowerCase().includes(search.toLowerCase()) ||
+        mentor.domain?.toLowerCase().includes(search.toLowerCase());
 
       const matchesCompany = selectedCompany ? mentor.company === selectedCompany : true;
       const matchesDomain = selectedDomain ? mentor.domain === selectedDomain : true;
@@ -239,8 +190,8 @@ export const Mentorship = () => {
   };
 
   // Unique companies and domains for select options
-  const uniqueCompanies = Array.from(new Set(MOCK_MENTORS.map(m => m.company)));
-  const uniqueDomains = Array.from(new Set(MOCK_MENTORS.map(m => m.domain)));
+  const uniqueCompanies = Array.from(new Set(mentorsList.map(m => m.company).filter(Boolean)));
+  const uniqueDomains = Array.from(new Set(mentorsList.map(m => m.domain).filter(Boolean)));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -327,7 +278,7 @@ export const Mentorship = () => {
               >
                 <CardBody className="p-4 flex gap-3">
                   <img
-                    src={mentor.avatar}
+                    src={mentor.avatar || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150"}
                     alt={mentor.name}
                     className="h-11 w-11 rounded-xl object-cover border border-gray-250 flex-shrink-0"
                   />
@@ -340,7 +291,7 @@ export const Mentorship = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] font-bold text-gray-550 mt-0.5">{mentor.designation}</p>
+                    <p className="text-[10px] font-bold text-gray-550 mt-0.5">{mentor.title}</p>
                     <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-1 font-sans">
                       <Building size={11} /> {mentor.company}
                     </p>
@@ -350,7 +301,7 @@ export const Mentorship = () => {
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-outfit">{mentor.experience}</span>
-                        <span className="text-[9px] font-bold text-gray-450 font-outfit">Class of {mentor.year}</span>
+                        <span className="text-[9px] font-bold text-gray-450 font-outfit">Class of {mentor.graduationYear || mentor.year || 2024}</span>
                       </div>
                     </div>
                   </div>
@@ -368,14 +319,14 @@ export const Mentorship = () => {
               <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                   <img
-                    src={selectedMentor.avatar}
+                    src={selectedMentor.avatar || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150"}
                     alt={selectedMentor.name}
                     className="h-16 w-16 rounded-2xl object-cover border border-gray-200 shadow-xs flex-shrink-0"
                   />
                   <div>
                     <h3 className="text-base font-extrabold text-gray-900 font-outfit leading-tight">{selectedMentor.name}</h3>
                     <p className="text-xs text-gray-500 mt-1 font-semibold font-sans flex items-center gap-1.5">
-                      <Building size={13} className="text-gray-400" /> {selectedMentor.designation} at <span className="text-gray-700 font-bold">{selectedMentor.company}</span>
+                      <Building size={13} className="text-gray-400" /> {selectedMentor.title} at <span className="text-gray-700 font-bold">{selectedMentor.company}</span>
                     </p>
                   </div>
                 </div>
@@ -402,11 +353,11 @@ export const Mentorship = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-150">
                   <div>
                     <span className="text-[9px] uppercase font-bold text-gray-400 font-outfit tracking-wide block">Alumni Branch</span>
-                    <span className="text-xs font-bold text-gray-800 mt-0.5 block">{selectedMentor.branch}</span>
+                    <span className="text-xs font-bold text-gray-800 mt-0.5 block">{selectedMentor.department || selectedMentor.branch || "Computer Science"}</span>
                   </div>
                   <div>
                     <span className="text-[9px] uppercase font-bold text-gray-400 font-outfit tracking-wide block">Graduation Year</span>
-                    <span className="text-xs font-bold text-brand-red mt-0.5 block">{selectedMentor.year}</span>
+                    <span className="text-xs font-bold text-brand-red mt-0.5 block">{selectedMentor.graduationYear || selectedMentor.year || 2024}</span>
                   </div>
                   <div>
                     <span className="text-[9px] uppercase font-bold text-gray-400 font-outfit tracking-wide block">Core Domain</span>
@@ -439,7 +390,9 @@ export const Mentorship = () => {
                   <h4 className="text-xs font-bold text-gray-955 font-outfit uppercase tracking-wide flex items-center gap-1">
                     <User size={13} className="text-brand-red" /> Alumni Biography
                   </h4>
-                  <p className="text-xs text-gray-500 font-sans leading-relaxed">{selectedMentor.bio}</p>
+                  <p className="text-xs text-gray-500 font-sans leading-relaxed">
+                    {selectedMentor.bio || selectedMentor.summary || "Alumni mentor specializing in technology leadership, career planning, and systems architectures."}
+                  </p>
                 </div>
 
                 {/* Key Skills */}

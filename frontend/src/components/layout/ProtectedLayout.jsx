@@ -107,7 +107,7 @@ export const ProtectedLayout = () => {
                 setSidebarOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold rounded-lg transition-colors ${
-                pathname === getDashboardPath()
+                pathname === getDashboardPath() && !(user?.role === "tpo" && new URLSearchParams(location.search).get("tab"))
                   ? "bg-brand-red text-white"
                   : "text-gray-400 hover:bg-gray-850 hover:text-white"
               }`}
@@ -117,12 +117,20 @@ export const ProtectedLayout = () => {
             </button>
 
             {activeLinks.map((link) => {
+              const tabParam = new URLSearchParams(location.search).get("tab");
               const isProfile = link === "Profile" && pathname === "/profile";
               const isJobs = link === "Jobs" && pathname === "/student/jobs" && user?.role === "student";
               const isMentorship = link === "Mentorship" && pathname === "/student/mentorship" && user?.role === "student";
               const isEvents = link === "Events" && pathname === "/student/events" && user?.role === "student";
               const isChat = link === "Chat" && pathname === "/student/chat";
-              const isActive = isProfile || isJobs || isMentorship || isEvents || isChat;
+              
+              // TPO navigation tab checks
+              const isTpoTab = user?.role === "tpo" && tabParam === link.toLowerCase() && pathname === "/tpo/dashboard";
+              
+              // Alumni navigation tab checks
+              const isAlumniTab = user?.role === "alumni" && tabParam === link.replace(" ", "").toLowerCase() && pathname === "/alumni/dashboard";
+              
+              const isActive = isProfile || isJobs || isMentorship || isEvents || isChat || isTpoTab || isAlumniTab;
 
               return (
                 <button
@@ -143,6 +151,12 @@ export const ProtectedLayout = () => {
                     } else if (link === "Chat") {
                       navigate("/student/chat");
                       setSidebarOpen(false);
+                    } else if (user?.role === "tpo") {
+                      navigate(`/tpo/dashboard?tab=${link.toLowerCase()}`);
+                      setSidebarOpen(false);
+                    } else if (user?.role === "alumni" && (link === "Mentorship" || link === "Interview Experiences" || link === "Events")) {
+                      navigate(`/alumni/dashboard?tab=${link.replace(" ", "").toLowerCase()}`);
+                      setSidebarOpen(false);
                     } else {
                       handlePlaceholderClick(link);
                     }
@@ -154,7 +168,7 @@ export const ProtectedLayout = () => {
                   }`}
                 >
                   <span>{link}</span>
-                  {!isActive && (link !== "Profile" && !(link === "Jobs" && user?.role === "student") && !(link === "Mentorship" && user?.role === "student") && !(link === "Events" && user?.role === "student") && !(link === "Chat")) && (
+                  {!isActive && (user?.role !== "tpo" && user?.role !== "alumni" && link !== "Profile" && !(link === "Jobs" && user?.role === "student") && !(link === "Mentorship" && user?.role === "student") && !(link === "Events" && user?.role === "student") && !(link === "Chat")) && (
                     <span className="text-[8px] bg-red-950/20 text-brand-red px-1.5 py-0.5 rounded font-extrabold">P2</span>
                   )}
                 </button>

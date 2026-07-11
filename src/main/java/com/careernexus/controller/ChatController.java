@@ -33,4 +33,10 @@ public class ChatController {
             @PathVariable Long otherUserId) {
         return ResponseEntity.ok(chatService.getChatHistory(userDetails.getId(), otherUserId));
     }
+
+    @GetMapping("/conversations")
+    public ResponseEntity<List<ChatMessageDTO.ConversationResponse>> getConversations(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(chatService.getConversations(userDetails.getId()));
+    }
 }

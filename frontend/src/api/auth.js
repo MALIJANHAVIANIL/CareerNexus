@@ -97,6 +97,15 @@ export const authApi = {
           designation: profile.currentRole,
           passoutYear: profile.graduationYear,
         };
+      } else if (backendRole === "HR") {
+        const profileRes = await apiClient.get("/api/users/profile/hr");
+        const profile = profileRes.data;
+        mappedUser = {
+          ...mappedUser,
+          companyId: profile.companyId,
+          company: profile.companyName,
+          designation: profile.designation,
+        };
       }
     } catch (profileError) {
       console.warn("Failed to retrieve user profile details: ", profileError);
@@ -195,7 +204,7 @@ export const authApi = {
   },
 
   registerHR: async (hrData) => {
-    const { name, email, password, companyId, designation } = hrData;
+    const { name, email, password, companyId, designation, companyName, isCustomCompany } = hrData;
 
     // 1. Create user credential on the backend
     const regResponse = await apiClient.post("/api/auth/register", {
@@ -212,7 +221,8 @@ export const authApi = {
 
     // 2. Initialize HR profile on the backend
     await apiClient.put("/api/users/profile/hr", {
-      companyId: parseInt(companyId, 10),
+      companyId: isCustomCompany ? null : parseInt(companyId, 10),
+      companyName: isCustomCompany ? companyName : null,
       designation: designation,
     });
 
@@ -220,7 +230,7 @@ export const authApi = {
       email,
       name,
       role: "hr",
-      companyId,
+      companyId: isCustomCompany ? null : companyId,
       designation,
     };
 

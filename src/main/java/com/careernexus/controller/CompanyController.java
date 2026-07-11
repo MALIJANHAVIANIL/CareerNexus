@@ -1,13 +1,20 @@
 package com.careernexus.controller;
 
-import com.careernexus.dto.CompanyDTO;
-import com.careernexus.service.CompanyService;
-import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.careernexus.dto.CompanyDTO;
+import com.careernexus.service.CompanyService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/companies")

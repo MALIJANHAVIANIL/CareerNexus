@@ -1,16 +1,27 @@
 package com.careernexus.service;
 
-import com.careernexus.dto.JobDTO;
-import com.careernexus.entity.*;
-import com.careernexus.exception.BadRequestException;
-import com.careernexus.exception.ResourceNotFoundException;
-import com.careernexus.exception.UnauthorizedException;
-import com.careernexus.repository.*;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.careernexus.dto.JobDTO;
+import com.careernexus.entity.Company;
+import com.careernexus.entity.HrProfile;
+import com.careernexus.entity.Job;
+import com.careernexus.entity.JobEligibility;
+import com.careernexus.entity.SavedJob;
+import com.careernexus.entity.StudentProfile;
+import com.careernexus.entity.User;
+import com.careernexus.exception.BadRequestException;
+import com.careernexus.exception.ResourceNotFoundException;
+import com.careernexus.exception.UnauthorizedException;
+import com.careernexus.repository.CompanyRepository;
+import com.careernexus.repository.HrProfileRepository;
+import com.careernexus.repository.JobRepository;
+import com.careernexus.repository.SavedJobRepository;
+import com.careernexus.repository.StudentProfileRepository;
 
 @Service
 public class JobServiceImpl implements JobService {
@@ -34,39 +45,54 @@ public class JobServiceImpl implements JobService {
     }
 
     private JobDTO.JobResponse mapToResponse(Job job) {
-        JobDTO.JobEligibilityDTO eligibilityDTO = null;
-        if (job.getJobEligibility() != null) {
-            eligibilityDTO = new JobDTO.JobEligibilityDTO(
-                    job.getJobEligibility().getMinimumCgpa(),
-                    job.getJobEligibility().getEligibleDepartments(),
-                    job.getJobEligibility().getGraduationYears(),
-                    job.getJobEligibility().isBacklogsAllowed()
-            );
-        }
 
-        return new JobDTO.JobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDescription(),
-                job.getCompany().getId(),
-                job.getCompany().getName(),
-                job.getPostedBy().getId(),
-                job.getPostedBy().getUser().getFullName(),
-                job.getLocation(),
-                job.getSalaryRange(),
-                job.getJobType(),
-                job.getCreatedAt(),
-                job.getDeadline(),
-                eligibilityDTO
+    JobDTO.JobEligibilityDTO eligibilityDTO = null;
+
+    if (job.getJobEligibility() != null) {
+
+        JobEligibility eligibility = job.getJobEligibility();
+
+        eligibilityDTO = new JobDTO.JobEligibilityDTO(
+                eligibility.getMinimumCgpa(),
+                eligibility.getEligibleDepartments(),
+                eligibility.getGraduationYears(),
+                eligibility.isBacklogsAllowed(),
+                eligibility.getMinimumTenthPercentage(),
+                eligibility.getMinimumTwelfthPercentage(),
+                eligibility.getAllowedGapYears(),
+                eligibility.getBondRequired(),
+                eligibility.getBondDuration()
         );
     }
+
+
+    return new JobDTO.JobResponse(
+            job.getId(),
+            job.getTitle(),
+            job.getDescription(),
+            job.getCompany().getId(),
+            job.getCompany().getName(),
+            job.getPostedBy().getId(),
+            job.getPostedBy().getUser().getFullName(),
+            job.getLocation(),
+            job.getSalaryRange(),
+            job.getExperience(),
+            job.getWorkMode(),
+            job.getOpenings(),
+            job.getCompanyLogo(),
+            job.getJobType(),
+            job.getCreatedAt(),
+            job.getDeadline(),
+            job.getJobApplications() != null ? job.getJobApplications().size() : 0,
+            eligibilityDTO
+    );
+}
 
     @Override
     @Transactional
     public JobDTO.JobResponse postJob(Long hrUserId, JobDTO.JobRequest request) {
-        HrProfile hrProfile = hrProfileRepository.findById(hrUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("HR Profile not found for User ID: " + hrUserId));
-
+       HrProfile hrProfile = hrProfileRepository.findByUserId(hrUserId)
+        .orElseThrow(() -> new ResourceNotFoundException("HR Profile not found for User ID: " + hrUserId));
         Company company = companyRepository.findById(request.companyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + request.companyId()));
 
@@ -129,23 +155,83 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    @Transactional
-    public void deleteJob(Long hrUserId, Long jobId) {
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
+@Transactional
+public JobDTO.JobResponse updateJob(Long hrUserId, Long jobId, JobDTO.JobRequest request) {
 
-        // Let either the poster HR or an ADMIN delete it.
-        HrProfile hrProfile = hrProfileRepository.findById(hrUserId).orElse(null);
+    HrProfile hrProfile = hrProfileRepository.findById(hrUserId)
+            .orElseThrow(() -> new ResourceNotFoundException("HR Profile not found for User ID: " + hrUserId));
 
-        if (hrProfile != null && !job.getPostedBy().getId().equals(hrProfile.getId())) {
-            throw new UnauthorizedException("You are not authorized to delete this job posting");
-        }
+    Job job = jobRepository.findById(jobId)
+            .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
 
-        jobRepository.delete(job);
+    if (!job.getPostedBy().getId().equals(hrProfile.getId())) {
+    throw new UnauthorizedException("You are not authorized to update this job");
+}
 
-        User performer = hrProfile != null ? hrProfile.getUser() : null;
-        auditLogService.log("DELETE_JOB", performer, "Deleted job ID: " + jobId);
+    Company company = companyRepository.findById(request.companyId())
+            .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + request.companyId()));
+
+    job.setTitle(request.title());
+    job.setDescription(request.description());
+    job.setCompany(company);
+    job.setLocation(request.location());
+    job.setSalaryRange(request.salaryRange());
+    job.setJobType(request.jobType());
+    job.setDeadline(request.deadline());
+    if (request.eligibility() != null) {
+
+    JobEligibility eligibility = job.getJobEligibility();
+
+    if (eligibility == null) {
+        eligibility = new JobEligibility();
+        eligibility.setJob(job);
+        job.setJobEligibility(eligibility);
     }
+
+    eligibility.setMinimumCgpa(request.eligibility().minimumCgpa());
+    eligibility.setEligibleDepartments(request.eligibility().eligibleDepartments());
+    eligibility.setGraduationYears(request.eligibility().graduationYears());
+    eligibility.setBacklogsAllowed(request.eligibility().backlogsAllowed());
+    eligibility.setMinimumTenthPercentage(request.eligibility().minimumTenthPercentage());
+    eligibility.setMinimumTwelfthPercentage(request.eligibility().minimumTwelfthPercentage());
+    eligibility.setAllowedGapYears(request.eligibility().allowedGapYears());
+    eligibility.setBondRequired(request.eligibility().bondRequired());
+    eligibility.setBondDuration(request.eligibility().bondDuration());
+}
+    Job updatedJob = jobRepository.save(job);
+
+    auditLogService.log(
+            "UPDATE_JOB",
+            hrProfile.getUser(),
+            "Updated Job ID: " + updatedJob.getId()
+    );
+
+   return mapToResponse(updatedJob);
+}
+
+@Override
+@Transactional
+public void deleteJob(Long hrUserId, Long jobId) {
+
+    HrProfile hrProfile = hrProfileRepository.findByUserId(hrUserId)
+        .orElseThrow(() ->
+                new ResourceNotFoundException("HR Profile not found for User ID: " + hrUserId));
+    Job job = jobRepository.findById(jobId)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException("Job not found"));
+
+    if (!job.getPostedBy().getId().equals(hrProfile.getId())) {
+        throw new UnauthorizedException("You are not authorized to delete this job");
+    }
+
+    jobRepository.delete(job);
+
+    auditLogService.log(
+            "DELETE_JOB",
+            hrProfile.getUser(),
+            "Deleted Job ID: " + jobId
+    );
+}
 
     @Override
     @Transactional

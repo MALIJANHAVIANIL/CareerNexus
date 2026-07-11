@@ -1,62 +1,101 @@
-import { mockJobs } from "./mockData";
+import apiClient from "./client";
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const getStoredJobs = () => {
-  const jobs = localStorage.getItem("cn_jobs");
-  if (!jobs) {
-    localStorage.setItem("cn_jobs", JSON.stringify(mockJobs));
-    return mockJobs;
-  }
-  return JSON.parse(jobs);
+const mapBackendJobToFrontend = (job) => {
+  if (!job) return null;
+  const typeMap = {
+    FULL_TIME: "Full-time",
+    PART_TIME: "Part-time",
+    INTERNSHIP: "Internship",
+    CONTRACT: "Contract"
+  };
+  return {
+    id: job.id.toString(),
+    title: job.title,
+    description: job.description,
+    company: job.companyName,
+    companyId: job.companyId,
+    location: job.location,
+    salary: job.salaryRange || "N/A",
+    type: typeMap[job.jobType] || "Full-time",
+    postedDate: job.createdAt ? job.createdAt.split("T")[0] : "Just now",
+    applicantsCount: job.totalApplications || 0,
+    logo: job.companyLogo || (job.companyName ? job.companyName[0].toUpperCase() : "C"),
+    logoBg: "bg-brand-red",
+    experience: job.experience || "0-2 years",
+    workMode: job.workMode || "In-office",
+    openings: job.openings || 1,
+    requirements: job.eligibility ? [
+      `Minimum CGPA: ${job.eligibility.minimumCgpa || 0.0}`,
+      `Eligible Departments: ${job.eligibility.eligibleDepartments || "All"}`,
+      `Graduation Years: ${job.eligibility.graduationYears || "All"}`
+    ] : ["Proficient in core concepts", "Excellent problem solving skills"]
+  };
 };
 
 export const jobsApi = {
   getAllJobs: async () => {
-    await delay(400);
-    return getStoredJobs();
+    const res = await apiClient.get("/api/jobs");
+    return (res.data || []).map(mapBackendJobToFrontend);
   },
 
   getJobById: async (jobId) => {
-    await delay(200);
-    const jobs = getStoredJobs();
-    const job = jobs.find((j) => j.id === jobId);
-    if (!job) throw new Error("Job not found");
-    return job;
+    const res = await apiClient.get(`/api/jobs/${jobId}`);
+    return mapBackendJobToFrontend(res.data);
   },
 
   postJob: async (jobData) => {
-    await delay(700);
-    const jobs = getStoredJobs();
-    const newJob = {
-      id: `job-${Date.now()}`,
-      postedDate: "Just now",
-      applicantsCount: 0,
-      logo: jobData.company ? jobData.company[0].toUpperCase() : "C",
-      logoBg: "bg-red-800",
-      ...jobData
+    const typeReverseMap = {
+      "Full-time": "FULL_TIME",
+      "Part-time": "PART_TIME",
+      "Internship": "INTERNSHIP",
+      "Contract": "CONTRACT"
     };
-    jobs.unshift(newJob);
-    localStorage.setItem("cn_jobs", JSON.stringify(jobs));
-    return newJob;
+
+    const userStr = localStorage.getItem("cn_user");
+    const user = userStr ? JSON.parse(userStr) : null;
+    const companyId = user?.companyId || 1; // fallback to 1 if not set
+
+    const deadlineDate = new Date();
+    deadlineDate.setDate(deadlineDate.getDate() + 30);
+
+    const postPayload = {
+      title: jobData.title,
+      description: jobData.description,
+      companyId: companyId,
+      location: jobData.location,
+      salaryRange: jobData.salary,
+      jobType: typeReverseMap[jobData.type] || "FULL_TIME",
+      deadline: deadlineDate.toISOString(),
+      eligibility: {
+        minimumCgpa: 0.0,
+        eligibleDepartments: "All",
+        graduationYears: "All",
+        backlogsAllowed: true,
+        minimumTenthPercentage: 0.0,
+        minimumTwelfthPercentage: 0.0,
+        allowedGapYears: 0,
+        bondRequired: false,
+        bondDuration: ""
+      }
+    };
+
+    const res = await apiClient.post("/api/jobs", postPayload);
+    return mapBackendJobToFrontend(res.data);
   },
 
   saveJob: async (jobId) => {
-    await delay(300);
-    const userStr = localStorage.getItem("cn_user");
-    if (!userStr) throw new Error("Please log in first.");
-    const user = JSON.parse(userStr);
-    
-    if (!user.savedJobs) user.savedJobs = [];
-    
-    const index = user.savedJobs.indexOf(jobId);
-    if (index > -1) {
-      user.savedJobs.splice(index, 1); // Unsaves
+    // Determine current save state
+    const savedRes = await apiClient.get("/api/jobs/saved");
+    const savedList = savedRes.data || [];
+    const isSaved = savedList.some(j => j.id.toString() === jobId.toString());
+
+    if (isSaved) {
+      await apiClient.delete(`/api/jobs/${jobId}/save`);
     } else {
-      user.savedJobs.push(jobId);
+      await apiClient.post(`/api/jobs/${jobId}/save`);
     }
-    
-    localStorage.setItem("cn_user", JSON.stringify(user));
-    return user.savedJobs;
+
+    const updatedRes = await apiClient.get("/api/jobs/saved");
+    return (updatedRes.data || []).map(j => j.id.toString());
   }
 };

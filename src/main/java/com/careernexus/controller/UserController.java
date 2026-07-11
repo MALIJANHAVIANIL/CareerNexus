@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -85,5 +86,10 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ProfileDTO.AdminProfileRequest request) {
         return ResponseEntity.ok(userService.updateAdminProfile(userDetails.getId(), request));
+    }
+
+    @GetMapping("/mentors")
+    public ResponseEntity<List<ProfileDTO.AlumniProfileResponse>> getVerifiedMentors() {
+        return ResponseEntity.ok(userService.getVerifiedMentors());
     }
 }

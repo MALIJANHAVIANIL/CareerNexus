@@ -1,21 +1,22 @@
 package com.careernexus.config;
 
-import com.careernexus.security.CustomUserDetailsService;
-import com.careernexus.security.JwtAuthenticationFilter;
-import com.careernexus.security.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.careernexus.security.CustomUserDetailsService;
+import com.careernexus.security.JwtAuthenticationFilter;
+import com.careernexus.security.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -56,6 +57,7 @@ public class SecurityConfig {
             throws Exception {
 
         http
+                .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .sessionManagement(session ->
@@ -76,11 +78,17 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
 
+                        .requestMatchers("/api/companies/**").permitAll()
+//.requestMatchers("/api/events/**").permitAll()
+//.requestMatchers("/api/jobs/**").permitAll()
+//.requestMatchers("/api/resumes/**").permitAll()
+
                         // Admin APIs
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/audit-logs/**").hasRole("ADMIN")
 
                         // All remaining APIs require authentication
+                       .requestMatchers("/api/jobs/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

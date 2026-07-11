@@ -1,8 +1,6 @@
 package com.careernexus.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -25,24 +23,59 @@ public class AlumniProfile {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @NotBlank(message = "Current company is required")
-    @Column(name = "current_company", nullable = false)
+    @Column
+    private String prn;
+
+    @Column(name = "current_company")
     private String currentCompany;
 
-    @NotBlank(message = "Current role is required")
-    @Column(name = "job_role", nullable = false)
+    @Column(name = "job_role")
     private String currentRole;
 
-    @Min(value = 1900, message = "Graduation year must be valid")
-    @Column(name = "graduation_year", nullable = false)
+    @Column(name = "graduation_year")
     private Integer graduationYear;
 
-    @NotBlank(message = "Department is required")
-    @Column(nullable = false)
+    @Column
     private String department;
 
     @Column(name = "industry")
     private String industry;
+
+    @Column
+    private String experience;
+
+    @Column(columnDefinition = "TEXT")
+    private String skills;
+
+    @Column(columnDefinition = "TEXT")
+    private String summary;
+
+    @Column(name = "resume_name")
+    private String resumeName;
+
+    @Column(name = "resume_size")
+    private String resumeSize;
+
+    @Column(name = "resume_uploaded")
+    private String resumeUploaded;
+
+    @Column(name = "profile_photo", columnDefinition = "TEXT")
+    private String profilePhoto;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "alumniProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AlumniProject> projects = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "alumniProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AlumniCertification> certifications = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "alumniProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AlumniLanguage> languages = new ArrayList<>();
+
+    @OneToOne(mappedBy = "alumniProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AlumniSocialLink socialLink;
 
     @Builder.Default
     @OneToMany(

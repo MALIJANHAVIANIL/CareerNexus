@@ -43,6 +43,22 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Builder.Default
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
+    @Builder.Default
+    @Column(name = "is_verified")
+    private Boolean isVerified = true;
+
+    public boolean isActive() {
+        return isActive == null || isActive;
+    }
+
+    public boolean isVerified() {
+        return isVerified == null || isVerified;
+    }
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

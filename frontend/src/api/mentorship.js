@@ -1,101 +1,79 @@
-import { mockMentors, mockMentorshipRequests } from "./mockData";
+import apiClient from "./client";
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const mapBackendMentorToFrontend = (m) => {
+  if (!m) return null;
+  return {
+    id: m.id.toString(),
+    name: m.user.fullName,
+    email: m.user.email,
+    company: m.currentCompany || "Technology Corp",
+    title: m.currentRole || "Industry Expert",
+    domain: m.industry || "Software Engineering",
+    rating: 4.8,
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+    skills: m.skills ? m.skills.split(",").map(s => s.trim()) : ["Software Engineering", "System Design"],
+    experience: m.graduationYear ? `${new Date().getFullYear() - m.graduationYear}+ years` : "3+ years"
+  };
+};
 
-const getStoredRequests = () => {
-  const reqs = localStorage.getItem("cn_mentorship_requests");
-  if (!reqs) {
-    localStorage.setItem("cn_mentorship_requests", JSON.stringify(mockMentorshipRequests));
-    return mockMentorshipRequests;
-  }
-  return JSON.parse(reqs);
+const mapBackendRequestToFrontend = (r) => {
+  if (!r) return null;
+  return {
+    id: r.id.toString(),
+    studentId: r.studentId.toString(),
+    studentName: r.studentName,
+    studentAvatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150",
+    studentTitle: "Student",
+    mentorId: r.mentorId.toString(),
+    mentorName: r.mentorName,
+    domain: "Software Engineering",
+    message: r.message,
+    status: r.status ? r.status.toLowerCase() : "pending",
+    date: r.createdAt ? r.createdAt.split("T")[0] : "Just now"
+  };
 };
 
 export const mentorshipApi = {
   getMentors: async () => {
-    await delay(400);
-    return mockMentors;
+    const res = await apiClient.get("/api/users/mentors");
+    return (res.data || []).map(mapBackendMentorToFrontend);
   },
 
   sendRequest: async (mentorId, domain, message) => {
-    await delay(700);
-    const userStr = localStorage.getItem("cn_user");
-    if (!userStr) throw new Error("Please log in first.");
-    const user = JSON.parse(userStr);
-
-    const reqs = getStoredRequests();
-    
-    // Check if request already exists
-    const exists = reqs.some((r) => r.mentorId === mentorId && r.studentId === user.id && r.status === "pending");
-    if (exists) throw new Error("You already have a pending request for this mentor.");
-
-    const newRequest = {
-      id: `req-${Date.now()}`,
-      studentId: user.id,
-      studentName: user.name,
-      studentAvatar: user.avatar,
-      studentTitle: user.title || "Student",
-      mentorId,
-      domain,
-      message,
-      status: "pending",
-      date: new Date().toISOString().split("T")[0]
-    };
-
-    reqs.unshift(newRequest);
-    localStorage.setItem("cn_mentorship_requests", JSON.stringify(reqs));
-    return newRequest;
+    const res = await apiClient.post("/api/mentorship/request", {
+      mentorId: parseInt(mentorId, 10),
+      message: `[Domain: ${domain}] ${message}`
+    });
+    return mapBackendRequestToFrontend(res.data);
   },
 
   getRequests: async (role, userId) => {
-    await delay(300);
-    const reqs = getStoredRequests();
-    if (role === "alumni") {
-      // In real app, we map alumni's mentor ID. Here, user-2 is Sarah Chen.
-      return reqs.filter((r) => r.mentorId === userId || r.mentorId === "user-2"); 
-    }
-    return reqs.filter((r) => r.studentId === userId);
+    const endpoint = role === "alumni" ? "/api/mentorship/mentor/requests" : "/api/mentorship/student/requests";
+    const res = await apiClient.get(endpoint);
+    return (res.data || []).map(mapBackendRequestToFrontend);
   },
 
   updateRequestStatus: async (requestId, status) => {
-    await delay(500);
-    const reqs = getStoredRequests();
-    const idx = reqs.findIndex((r) => r.id === requestId);
-    if (idx === -1) throw new Error("Request not found");
+    const backendStatus = status === "approved" ? "APPROVED" : "REJECTED";
+    const res = await apiClient.put(`/api/mentorship/request/${requestId}/respond`, {
+      status: backendStatus,
+      response: `Request has been ${status}`
+    });
 
-    reqs[idx].status = status;
-    localStorage.setItem("cn_mentorship_requests", JSON.stringify(reqs));
+    const mapped = mapBackendRequestToFrontend(res.data);
 
-    // If approved, create a new mock chat room automatically!
+    // If approved, initialize a chat conversation automatically
     if (status === "approved") {
-      const chats = JSON.parse(localStorage.getItem("cn_chats") || "[]");
-      const request = reqs[idx];
-      const mentor = mockMentors.find((m) => m.id === request.mentorId || m.name === "Sarah Chen");
-      
-      const chatId = `chat-approved-${request.id}`;
-      const chatExists = chats.some((c) => c.chatId === chatId);
-      
-      if (!chatExists) {
-        const newChat = {
-          chatId,
-          studentId: request.studentId,
-          mentorId: request.mentorId,
-          mentorName: mentor ? mentor.name : "Sarah Chen",
-          mentorAvatar: mentor ? mentor.avatar : "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-          mentorTitle: mentor ? mentor.title : "Senior Engineer at Google",
-          messages: [
-            {
-              senderId: request.mentorId,
-              text: `Hello ${request.studentName}! I have approved your mentorship request. Let's schedule some time to chat.`,
-              timestamp: new Date().toISOString()
-            }
-          ]
-        };
-        chats.unshift(newChat);
-        localStorage.setItem("cn_chats", JSON.stringify(chats));
+      try {
+        await apiClient.post("/api/chat/send", {
+          recipientId: parseInt(mapped.studentId, 10),
+          content: "Hello! I have approved your mentorship request. Let's schedule some time to chat."
+        });
+      } catch (err) {
+        console.warn("Failed to automatically start chat conversation:", err);
       }
     }
 
-    return reqs[idx];
+    return mapped;
   }
 };

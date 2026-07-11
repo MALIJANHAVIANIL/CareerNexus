@@ -17,52 +17,7 @@ import { useChat } from "../../context/ChatContext";
 import { useNotifications } from "../../context/NotificationContext";
 import Card, { CardBody } from "../../components/common/Card";
 import Button from "../../components/common/Button";
-
-// Comprehensive Mock Alumni Contact List
-const ALUMNI_CONTACTS = [
-  {
-    id: "mentor-1",
-    name: "Vikramaditya Roy",
-    company: "Microsoft Corporation",
-    title: "Senior Software Architect",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-2",
-    name: "Pooja Deshmukh",
-    company: "Amazon Web Services (AWS)",
-    title: "Cloud Infrastructure Engineer",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-3",
-    name: "Amit Patil",
-    company: "NVIDIA Graphics",
-    title: "AI Research Scientist",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-4",
-    name: "Janhavi Kulkarni",
-    company: "Google India",
-    title: "Frontend Engineer",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-5",
-    name: "Rohan Mehta",
-    company: "JPMorgan Chase & Co.",
-    title: "Software Engineer",
-    avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=150"
-  },
-  {
-    id: "mentor-6",
-    name: "Sneha Nair",
-    company: "Meta India",
-    title: "Technical Product Manager",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
-  }
-];
+import { mentorshipApi } from "../../api/mentorship";
 
 export const ChatDashboard = () => {
   const { user } = useAuth();
@@ -79,6 +34,27 @@ export const ChatDashboard = () => {
   // Message text input
   const [typedMessage, setTypedMessage] = useState("");
   const messagesEndRef = useRef(null);
+
+  const [contacts, setContacts] = useState([]);
+
+  const loadContacts = async () => {
+    try {
+      const mentors = await mentorshipApi.getMentors();
+      setContacts(mentors.map(m => ({
+        id: m.id,
+        name: m.name,
+        company: m.company,
+        title: m.title,
+        avatar: m.avatar || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150"
+      })));
+    } catch (err) {
+      console.warn("Failed to load mentors for contact list:", err);
+    }
+  };
+
+  useEffect(() => {
+    loadContacts();
+  }, []);
 
   // Auto-scroll to message window bottom
   useEffect(() => {
@@ -120,12 +96,12 @@ export const ChatDashboard = () => {
   });
 
   // Filters for contact list
-  const filteredContacts = ALUMNI_CONTACTS.filter((contact) => {
+  const filteredContacts = contacts.filter((contact) => {
     const term = contactSearch.toLowerCase();
     return (
-      contact.name.toLowerCase().includes(term) ||
-      contact.company.toLowerCase().includes(term) ||
-      contact.title.toLowerCase().includes(term)
+      contact.name?.toLowerCase().includes(term) ||
+      contact.company?.toLowerCase().includes(term) ||
+      contact.title?.toLowerCase().includes(term)
     );
   });
 
