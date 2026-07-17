@@ -70,7 +70,9 @@ export const JobBoard = () => {
       })));
 
       // Sync selected job redirection or default to first job
-      const stateJobId = location.state?.jobId;
+      const searchParams = new URLSearchParams(location.search);
+      const queryJobId = searchParams.get("jobId");
+      const stateJobId = location.state?.jobId || queryJobId;
       if (stateJobId) {
         const found = allJobs.find((j) => String(j.id) === String(stateJobId));
         if (found) {

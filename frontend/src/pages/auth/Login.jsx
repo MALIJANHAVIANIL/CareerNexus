@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, Hash, Sparkles, TrendingUp, GraduationCap } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
@@ -11,9 +11,13 @@ export const Login = () => {
   const { login } = useAuth();
   const { showToast } = useNotifications();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const roleParam = searchParams.get("role");
 
-  // Active Role tab: student, alumni, tpo
-  const [role, setRole] = useState("student");
+  // Active Role tab: student, alumni, hr, tpo
+  const [role, setRole] = useState(
+    ["student", "alumni", "hr", "tpo"].includes(roleParam) ? roleParam : "student"
+  );
   
   // Student fields
   const [studentIdentifier, setStudentIdentifier] = useState(""); // PRN OR Email
@@ -181,7 +185,11 @@ export const Login = () => {
                 label="Email Address"
                 name="email"
                 type="email"
-                placeholder={role === "alumni" ? "sarah@google.com" : "tpo@careernexus.com"}
+                placeholder={
+                  role === "alumni" ? "sarah@google.com" :
+                  role === "hr" ? "hr@company.com" :
+                  "tpo@college.edu"
+                }
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 icon={<Mail size={16} />}

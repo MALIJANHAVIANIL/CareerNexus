@@ -19,7 +19,9 @@ import {
   ExternalLink,
   Linkedin,
   Github,
-  Globe
+  Globe,
+  Share2,
+  Search
 } from "lucide-react";
 import Card, { CardBody, CardHeader } from "../../components/common/Card";
 import Button from "../../components/common/Button";
@@ -28,6 +30,10 @@ export const TPODashboard = () => {
   const { user } = useAuth();
   const { showToast } = useNotifications();
   const location = useLocation();
+
+  const [studentSearch, setStudentSearch] = useState("");
+  const [alumniSearch, setAlumniSearch] = useState("");
+  const [companySearch, setCompanySearch] = useState("");
 
   const [pendingAlumni, setPendingAlumni] = useState([]);
   const [students, setStudents] = useState([]);
@@ -266,6 +272,17 @@ export const TPODashboard = () => {
   const activeTab = searchParams.get("tab") || "dashboard";
 
   const renderStudentsTab = () => {
+    const filteredStudents = students.filter((st) => {
+      const q = studentSearch.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        (st.name && st.name.toLowerCase().includes(q)) ||
+        (st.email && st.email.toLowerCase().includes(q)) ||
+        (st.department && st.department.toLowerCase().includes(q)) ||
+        (st.rollNumber && st.rollNumber.toLowerCase().includes(q))
+      );
+    });
+
     return (
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-brand-black to-red-950 text-white rounded-2xl p-6 shadow-md border border-brand-red/10">
@@ -276,14 +293,24 @@ export const TPODashboard = () => {
         </div>
 
         <Card hover={false} className="bg-white border-gray-150 shadow-sm">
-          <CardHeader className="bg-white border-b border-gray-100 py-4 px-5 flex justify-between items-center">
+          <CardHeader className="bg-white border-b border-gray-100 py-4 px-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h3 className="text-sm font-bold text-gray-900 font-outfit uppercase tracking-wider">
-              Total Candidates ({students.length})
+              Total Candidates ({filteredStudents.length})
             </h3>
+            <div className="relative w-full sm:w-64 text-gray-800">
+              <input
+                type="text"
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                placeholder="Search candidates..."
+                className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-brand-red bg-white"
+              />
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-400" />
+            </div>
           </CardHeader>
           <CardBody className="p-0">
-            {students.length === 0 ? (
-              <p className="p-8 text-center text-xs text-gray-400 font-medium">No students registered in the system yet.</p>
+            {filteredStudents.length === 0 ? (
+              <p className="p-8 text-center text-xs text-gray-400 font-medium">No students match your search.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-150 text-xs">
@@ -297,7 +324,7 @@ export const TPODashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
-                    {students.map((st) => (
+                    {filteredStudents.map((st) => (
                       <tr key={st.id} className="hover:bg-gray-50/50 transition">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="font-bold text-gray-955 font-outfit">{st.name}</div>
@@ -335,6 +362,18 @@ export const TPODashboard = () => {
   };
 
   const renderAlumniTab = () => {
+    const filteredAlumni = allAlumni.filter((al) => {
+      const q = alumniSearch.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        (al.name && al.name.toLowerCase().includes(q)) ||
+        (al.email && al.email.toLowerCase().includes(q)) ||
+        (al.company && al.company.toLowerCase().includes(q)) ||
+        (al.role && al.role.toLowerCase().includes(q)) ||
+        (al.department && al.department.toLowerCase().includes(q))
+      );
+    });
+
     return (
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-brand-black to-red-950 text-white rounded-2xl p-6 shadow-md border border-brand-red/10">
@@ -409,14 +448,24 @@ export const TPODashboard = () => {
 
         {/* Directory Card */}
         <Card hover={false} className="bg-white border-gray-150 shadow-sm">
-          <CardHeader className="bg-white border-b border-gray-100 py-4 px-5">
+          <CardHeader className="bg-white border-b border-gray-100 py-4 px-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h3 className="text-sm font-bold text-gray-900 font-outfit uppercase tracking-wider">
-              Verified Alumni Directory ({allAlumni.length})
+              Verified Alumni Directory ({filteredAlumni.length})
             </h3>
+            <div className="relative w-full sm:w-64 text-gray-800">
+              <input
+                type="text"
+                value={alumniSearch}
+                onChange={(e) => setAlumniSearch(e.target.value)}
+                placeholder="Search alumni..."
+                className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-brand-red bg-white"
+              />
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-400" />
+            </div>
           </CardHeader>
           <CardBody className="p-0">
-            {allAlumni.length === 0 ? (
-              <p className="p-8 text-center text-xs text-gray-400 font-medium">No verified alumni registered yet.</p>
+            {filteredAlumni.length === 0 ? (
+              <p className="p-8 text-center text-xs text-gray-400 font-medium">No verified alumni match your search.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-150 text-xs">
@@ -429,7 +478,7 @@ export const TPODashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
-                    {allAlumni.map((al) => (
+                    {filteredAlumni.map((al) => (
                       <tr key={al.id} className="hover:bg-gray-50/50 transition">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="font-bold text-gray-955 font-outfit">{al.name}</div>
@@ -462,6 +511,15 @@ export const TPODashboard = () => {
   };
 
   const renderCompaniesTab = () => {
+    const filteredCompanies = companies.filter((c) => {
+      const q = companySearch.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.industry && c.industry.toLowerCase().includes(q))
+      );
+    });
+
     return (
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-brand-black to-red-950 text-white rounded-2xl p-6 shadow-md border border-brand-red/10 flex justify-between items-center flex-wrap gap-4">
@@ -480,8 +538,24 @@ export const TPODashboard = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {companies.map((c) => {
+        <div className="flex justify-end text-gray-800">
+          <div className="relative w-full sm:w-72">
+            <input
+              type="text"
+              value={companySearch}
+              onChange={(e) => setCompanySearch(e.target.value)}
+              placeholder="Search companies by name or industry..."
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-red bg-white"
+            />
+            <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-gray-400" />
+          </div>
+        </div>
+
+        {filteredCompanies.length === 0 ? (
+          <p className="p-8 text-center text-xs text-gray-400 font-medium bg-white rounded-2xl border border-gray-150">No partner companies match your search.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCompanies.map((c) => {
             const letter = c.name ? c.name.charAt(0).toUpperCase() : "C";
             return (
               <Card key={c.id} className="bg-white border-gray-150 shadow-sm flex flex-col justify-between h-48">
@@ -505,7 +579,8 @@ export const TPODashboard = () => {
               </Card>
             );
           })}
-        </div>
+          </div>
+        )}
 
         {showCompanyModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs">
@@ -615,9 +690,21 @@ export const TPODashboard = () => {
                       <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Dept: {j.department || "All Branches"}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between items-start md:items-end flex-shrink-0 min-w-32">
-                    <span className="text-base font-black text-brand-black font-outfit">{j.salaryPackage || "N/A"}</span>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase mt-1 font-outfit">Drive Active</span>
+                  <div className="flex flex-col justify-between items-start md:items-end flex-shrink-0 min-w-32 gap-3">
+                    <div className="text-right">
+                      <span className="text-base font-black text-brand-black font-outfit">{j.salaryPackage || "N/A"}</span>
+                      <span className="block text-[10px] text-gray-400 font-bold uppercase mt-1 font-outfit">Drive Active</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const link = `${window.location.origin}/jobs?jobId=${j.id}`;
+                        navigator.clipboard.writeText(link);
+                        showToast(`Job link for "${j.title}" copied to clipboard!`, "success");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-brand-red text-brand-red hover:bg-brand-red hover:text-white rounded-lg text-xs font-bold font-outfit transition"
+                    >
+                      <Share2 size={13} /> Share Job
+                    </button>
                   </div>
                 </CardBody>
               </Card>

@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { GraduationCap, Award, ArrowRight, Sparkles, Building } from "lucide-react";
+import { GraduationCap, Award, ArrowRight, Sparkles, Building, Shield } from "lucide-react";
 import Logo from "../../components/shared/Logo";
 import Button from "../../components/common/Button";
 
@@ -92,6 +92,16 @@ export const WelcomeScreen = () => {
                 className="py-3 justify-between border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-brand-black"
               >
                 <span>Recruiter (HR) Registration</span>
+                <ArrowRight size={16} />
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => navigate("/login?role=tpo")}
+                iconBefore={<Shield size={18} />}
+                className="py-3 justify-between border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-brand-black"
+              >
+                <span>TPO Admin Portal</span>
                 <ArrowRight size={16} />
               </Button>
 
