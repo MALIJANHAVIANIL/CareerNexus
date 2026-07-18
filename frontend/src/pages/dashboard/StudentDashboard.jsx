@@ -13,7 +13,8 @@ import {
   DollarSign,
   Bell,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  Award
 } from "lucide-react";
 import Card, { CardBody } from "../../components/common/Card";
 import { jobsApi } from "../../api/jobs";
