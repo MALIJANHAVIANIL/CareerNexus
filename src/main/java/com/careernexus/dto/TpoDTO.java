@@ -47,4 +47,9 @@ public final class TpoDTO {
         Integer graduationYear,
         boolean isVerified
     ) {}
+
+    public record BroadcastNotificationRequest(
+        @jakarta.validation.constraints.NotBlank(message = "Message cannot be empty")
+        String message
+    ) {}
 }

@@ -91,6 +91,22 @@ public class CareerNexusApplication {
                     companyRepository.save(company);
                 }
             }
+
+            // Update any existing users with null isActive or isVerified to true
+            userRepository.findAll().forEach(u -> {
+                boolean changed = false;
+                if (u.getIsActive() == null) {
+                    u.setIsActive(true);
+                    changed = true;
+                }
+                if (u.getIsVerified() == null) {
+                    u.setIsVerified(true);
+                    changed = true;
+                }
+                if (changed) {
+                    userRepository.save(u);
+                }
+            });
         };
     }
 }

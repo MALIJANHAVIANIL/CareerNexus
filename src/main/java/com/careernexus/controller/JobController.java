@@ -22,7 +22,7 @@ public class JobController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('HR')")
+    @PreAuthorize("hasAnyRole('HR', 'ADMIN')")
     public ResponseEntity<JobDTO.JobResponse> postJob(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody JobDTO.JobRequest request) {
@@ -63,7 +63,7 @@ public class JobController {
     }
 
     @PutMapping("/{id}")
-@PreAuthorize("hasRole('HR')")
+    @PreAuthorize("hasAnyRole('HR', 'ADMIN')")
 public ResponseEntity<JobDTO.JobResponse> updateJob(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long id,

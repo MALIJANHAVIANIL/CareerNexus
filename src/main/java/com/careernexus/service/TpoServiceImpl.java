@@ -20,6 +20,7 @@ public class TpoServiceImpl implements TpoService {
     private final CompanyRepository companyRepository;
     private final JobApplicationRepository jobApplicationRepository;
     private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     public TpoServiceImpl(
             UserRepository userRepository,
@@ -28,7 +29,8 @@ public class TpoServiceImpl implements TpoService {
             HrProfileRepository hrProfileRepository,
             CompanyRepository companyRepository,
             JobApplicationRepository jobApplicationRepository,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            NotificationService notificationService) {
 
         this.userRepository = userRepository;
         this.studentProfileRepository = studentProfileRepository;
@@ -37,6 +39,7 @@ public class TpoServiceImpl implements TpoService {
         this.companyRepository = companyRepository;
         this.jobApplicationRepository = jobApplicationRepository;
         this.auditLogService = auditLogService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -224,5 +227,17 @@ public class TpoServiceImpl implements TpoService {
                         ap.getUser().getIsVerified()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void broadcastNotification(TpoDTO.BroadcastNotificationRequest request) {
+        List<User> activeUsers = userRepository.findAll().stream()
+                .filter(User::isActive)
+                .collect(Collectors.toList());
+
+        for (User u : activeUsers) {
+            notificationService.createNotification(u, request.message(), NotificationType.INFO);
+        }
     }
 }

@@ -38,6 +38,11 @@ export const jobsApi = {
     return (res.data || []).map(mapBackendJobToFrontend);
   },
 
+  getSavedJobs: async () => {
+    const res = await apiClient.get("/api/jobs/saved");
+    return (res.data || []).map(mapBackendJobToFrontend);
+  },
+
   getJobById: async (jobId) => {
     const res = await apiClient.get(`/api/jobs/${jobId}`);
     return mapBackendJobToFrontend(res.data);

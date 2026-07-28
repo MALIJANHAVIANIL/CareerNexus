@@ -58,6 +58,23 @@ export const TPODashboard = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: "", description: "", speaker: "", startTime: "", endTime: "", location: "" });
   const [savingEvent, setSavingEvent] = useState(false);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [newJob, setNewJob] = useState({
+    title: "",
+    description: "",
+    companyId: "",
+    location: "",
+    salaryRange: "",
+    jobType: "FULL_TIME",
+    deadline: "",
+    eligibility: {
+      minimumCgpa: "0.0",
+      eligibleDepartments: "All Branches",
+      graduationYears: "All",
+      backlogsAllowed: true
+    }
+  });
+  const [savingJob, setSavingJob] = useState(false);
 
   const loadTpoData = async () => {
     try {
@@ -108,7 +125,7 @@ export const TPODashboard = () => {
       setLogs(logsData);
 
       const driveList = companiesData.map(comp => {
-        const matchingJobs = jobsData.filter(job => job.company?.toLowerCase() === comp.name?.toLowerCase());
+        const matchingJobs = jobsData.filter(job => job.companyName?.toLowerCase() === comp.name?.toLowerCase());
         const count = matchingJobs.length;
         return {
           name: comp.name,
@@ -225,6 +242,68 @@ export const TPODashboard = () => {
       showToast(err.message || "Failed to create event", "error");
     } finally {
       setSavingEvent(false);
+    }
+  };
+
+  const openJobModal = () => {
+    const defaultDeadline = new Date();
+    defaultDeadline.setDate(defaultDeadline.getDate() + 30);
+    const deadlineIso = new Date(defaultDeadline.getTime() - defaultDeadline.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    
+    setNewJob({
+      title: "",
+      description: "",
+      companyId: companies.length > 0 ? companies[0].id.toString() : "",
+      location: "",
+      salaryRange: "",
+      jobType: "FULL_TIME",
+      deadline: deadlineIso,
+      eligibility: {
+        minimumCgpa: "0.0",
+        eligibleDepartments: "All Branches",
+        graduationYears: "All",
+        backlogsAllowed: true
+      }
+    });
+    setShowJobModal(true);
+  };
+
+  const handleCreateJob = async (e) => {
+    e.preventDefault();
+    if (!newJob.title.trim() || !newJob.description.trim() || !newJob.companyId || !newJob.location.trim() || !newJob.deadline) {
+      showToast("Title, Description, Company, Location, and Deadline are required.", "error");
+      return;
+    }
+    setSavingJob(true);
+    try {
+      const deadlineIso = new Date(newJob.deadline).toISOString();
+      await apiClient.post("/api/jobs", {
+        title: newJob.title.trim(),
+        description: newJob.description.trim(),
+        companyId: parseInt(newJob.companyId),
+        location: newJob.location.trim(),
+        salaryRange: newJob.salaryRange.trim() || "N/A",
+        jobType: newJob.jobType,
+        deadline: deadlineIso,
+        eligibility: {
+          minimumCgpa: parseFloat(newJob.eligibility.minimumCgpa) || 0.0,
+          eligibleDepartments: newJob.eligibility.eligibleDepartments.trim() || "All",
+          graduationYears: newJob.eligibility.graduationYears.trim() || "All",
+          backlogsAllowed: newJob.eligibility.backlogsAllowed,
+          minimumTenthPercentage: 0.0,
+          minimumTwelfthPercentage: 0.0,
+          allowedGapYears: 0,
+          bondRequired: false,
+          bondDuration: ""
+        }
+      });
+      showToast(`Job "${newJob.title}" posted successfully!`, "success");
+      setShowJobModal(false);
+      loadTpoData();
+    } catch (err) {
+      showToast(err.response?.data?.message || err.message || "Failed to post job", "error");
+    } finally {
+      setSavingJob(false);
     }
   };
 
@@ -663,11 +742,20 @@ export const TPODashboard = () => {
   const renderJobsTab = () => {
     return (
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-brand-black to-red-950 text-white rounded-2xl p-6 shadow-md border border-brand-red/10">
-          <h2 className="text-xl md:text-2xl font-extrabold font-outfit">Placement Openings</h2>
-          <p className="text-xs text-gray-300 font-sans mt-1">
-            Monitor open job postings, salary packages, eligibility filters, and corporate specifications.
-          </p>
+        <div className="bg-gradient-to-r from-brand-black to-red-950 text-white rounded-2xl p-6 shadow-md border border-brand-red/10 flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <h2 className="text-xl md:text-2xl font-extrabold font-outfit">Placement Openings</h2>
+            <p className="text-xs text-gray-300 font-sans mt-1">
+              Monitor open job postings, salary packages, eligibility filters, and corporate specifications.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            onClick={openJobModal}
+            className="bg-brand-red hover:bg-brand-darkRed text-white text-xs font-bold py-2 px-4 rounded-xl flex items-center gap-1.5 flex-shrink-0"
+          >
+            <PlusCircle size={15} /> Add Job
+          </Button>
         </div>
 
         <div className="space-y-4">
@@ -681,18 +769,18 @@ export const TPODashboard = () => {
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-gray-955 font-outfit">{j.title}</h4>
                       <span className="bg-red-50 text-brand-red text-[9px] font-extrabold uppercase px-2 py-0.5 rounded font-outfit">
-                        {j.company}
+                        {j.companyName}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 font-sans line-clamp-2 leading-relaxed">{j.description}</p>
                     <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 font-semibold pt-1">
-                      <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Min CGPA: {j.minCgpa ? j.minCgpa.toFixed(2) : "0.00"}</span>
-                      <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Dept: {j.department || "All Branches"}</span>
+                      <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Min CGPA: {j.eligibility?.minimumCgpa ? j.eligibility.minimumCgpa.toFixed(2) : "0.00"}</span>
+                      <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Dept: {j.eligibility?.eligibleDepartments || "All Branches"}</span>
                     </div>
                   </div>
                   <div className="flex flex-col justify-between items-start md:items-end flex-shrink-0 min-w-32 gap-3">
                     <div className="text-right">
-                      <span className="text-base font-black text-brand-black font-outfit">{j.salaryPackage || "N/A"}</span>
+                      <span className="text-base font-black text-brand-black font-outfit">{j.salaryRange || "N/A"}</span>
                       <span className="block text-[10px] text-gray-400 font-bold uppercase mt-1 font-outfit">Drive Active</span>
                     </div>
                     <button
@@ -711,6 +799,199 @@ export const TPODashboard = () => {
             ))
           )}
         </div>
+
+        {showJobModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl border border-gray-150 max-w-lg w-full shadow-2xl p-6 relative animate-slide-up text-gray-800 max-h-[90vh] overflow-y-auto">
+              <h3 className="text-base font-bold text-gray-900 font-outfit uppercase tracking-wider mb-4 border-b border-gray-50 pb-2">
+                Post New Placement Drive / Job
+              </h3>
+              
+              <form onSubmit={handleCreateJob} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 font-outfit">Job Title *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newJob.title}
+                      onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
+                      placeholder="e.g. Software Engineer"
+                      className="block w-full border border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 font-outfit">Company *</label>
+                    {companies.length === 0 ? (
+                      <div className="text-xs text-red-500 font-semibold py-2">
+                        No companies found. Please add a company in the Companies tab first!
+                      </div>
+                    ) : (
+                      <select
+                        required
+                        value={newJob.companyId}
+                        onChange={(e) => setNewJob({ ...newJob, companyId: e.target.value })}
+                        className="block w-full border border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                      >
+                        <option value="">Select Company</option>
+                        {companies.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 font-outfit">Job Type *</label>
+                    <select
+                      value={newJob.jobType}
+                      onChange={(e) => setNewJob({ ...newJob, jobType: e.target.value })}
+                      className="block w-full border border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                    >
+                      <option value="FULL_TIME">Full-time</option>
+                      <option value="INTERNSHIP">Internship</option>
+                      <option value="PART_TIME">Part-time</option>
+                      <option value="CONTRACT">Contract</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 font-outfit">Location *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newJob.location}
+                      onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
+                      placeholder="e.g. Pune, India"
+                      className="block w-full border border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 font-outfit">Salary Range / Stipend</label>
+                    <input
+                      type="text"
+                      value={newJob.salaryRange}
+                      onChange={(e) => setNewJob({ ...newJob, salaryRange: e.target.value })}
+                      placeholder="e.g. 12 LPA"
+                      className="block w-full border border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 font-outfit">Application Deadline *</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={newJob.deadline}
+                    onChange={(e) => setNewJob({ ...newJob, deadline: e.target.value })}
+                    className="block w-full border border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 font-outfit">Job Description *</label>
+                  <textarea
+                    required
+                    value={newJob.description}
+                    onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
+                    placeholder="Provide full description of job role, responsibilities, and skills required..."
+                    rows="3"
+                    className="block w-full border border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                  />
+                </div>
+
+                <div className="border-t border-gray-100 pt-3">
+                  <h4 className="text-xs font-extrabold text-brand-black uppercase tracking-wider mb-3 font-outfit">
+                    Eligibility Criteria
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Minimum CGPA</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="10"
+                        value={newJob.eligibility.minimumCgpa}
+                        onChange={(e) => setNewJob({
+                          ...newJob,
+                          eligibility: { ...newJob.eligibility, minimumCgpa: e.target.value }
+                        })}
+                        placeholder="e.g. 7.5"
+                        className="block w-full border border-gray-300 rounded-lg text-xs py-2 px-2.5 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Eligible Departments</label>
+                      <input
+                        type="text"
+                        value={newJob.eligibility.eligibleDepartments}
+                        onChange={(e) => setNewJob({
+                          ...newJob,
+                          eligibility: { ...newJob.eligibility, eligibleDepartments: e.target.value }
+                        })}
+                        placeholder="e.g. Computer Eng., IT"
+                        className="block w-full border border-gray-300 rounded-lg text-xs py-2 px-2.5 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Graduation Years</label>
+                      <input
+                        type="text"
+                        value={newJob.eligibility.graduationYears}
+                        onChange={(e) => setNewJob({
+                          ...newJob,
+                          eligibility: { ...newJob.eligibility, graduationYears: e.target.value }
+                        })}
+                        placeholder="e.g. 2026, 2027"
+                        className="block w-full border border-gray-300 rounded-lg text-xs py-2 px-2.5 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-3.5">
+                    <input
+                      type="checkbox"
+                      id="backlogsAllowed"
+                      checked={newJob.eligibility.backlogsAllowed}
+                      onChange={(e) => setNewJob({
+                        ...newJob,
+                        eligibility: { ...newJob.eligibility, backlogsAllowed: e.target.checked }
+                      })}
+                      className="h-4 w-4 border border-gray-300 rounded text-brand-red focus:ring-brand-red"
+                    />
+                    <label htmlFor="backlogsAllowed" className="text-xs font-bold text-gray-600">Active Backlogs Allowed</label>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-3 border-t border-gray-50">
+                  <button
+                    type="button"
+                    onClick={() => setShowJobModal(false)}
+                    className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-500 rounded-xl text-xs font-bold font-outfit"
+                  >
+                    Cancel
+                  </button>
+                  <Button
+                    type="submit"
+                    loading={savingJob}
+                    disabled={companies.length === 0}
+                    className="px-4 py-2 bg-brand-red hover:bg-brand-darkRed text-white rounded-xl text-xs font-bold font-outfit"
+                  >
+                    Post Drive / Job
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

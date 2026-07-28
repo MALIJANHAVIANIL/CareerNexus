@@ -92,18 +92,31 @@ public class JobApplicationServiceImpl implements JobApplicationService {
             // Department check
             if (eligibility.getEligibleDepartments() != null && !eligibility.getEligibleDepartments().isBlank()) {
                 String deps = eligibility.getEligibleDepartments().toLowerCase();
-                String studentDep = student.getDepartment() != null ? student.getDepartment().toLowerCase() : "";
-                if (studentDep.isEmpty() || !deps.contains(studentDep)) {
-                    throw new BadRequestException("Your department (" + (student.getDepartment() != null ? student.getDepartment() : "N/A") + ") is not eligible for this job");
+                if (!deps.contains("all") && !deps.contains("any")) {
+                    String studentDep = student.getDepartment() != null ? student.getDepartment().toLowerCase() : "";
+                    String[] depArray = deps.split("[,/;|]+");
+                    boolean match = false;
+                    for (String d : depArray) {
+                        String trimmed = d.trim();
+                        if (!trimmed.isEmpty() && (studentDep.contains(trimmed) || trimmed.contains(studentDep))) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    if (studentDep.isEmpty() || !match) {
+                        throw new BadRequestException("Your department (" + (student.getDepartment() != null ? student.getDepartment() : "N/A") + ") is not eligible for this job");
+                    }
                 }
             }
 
             // Graduation Year check
             if (eligibility.getGraduationYears() != null && !eligibility.getGraduationYears().isBlank()) {
-                String years = eligibility.getGraduationYears();
-                String studentYear = student.getGraduationYear() != null ? String.valueOf(student.getGraduationYear()) : "";
-                if (studentYear.isEmpty() || !years.contains(studentYear)) {
-                    throw new BadRequestException("Your graduation year (" + (studentYear.isEmpty() ? "N/A" : studentYear) + ") is not eligible for this job");
+                String years = eligibility.getGraduationYears().toLowerCase();
+                if (!years.contains("all") && !years.contains("any")) {
+                    String studentYear = student.getGraduationYear() != null ? String.valueOf(student.getGraduationYear()) : "";
+                    if (studentYear.isEmpty() || !years.contains(studentYear)) {
+                        throw new BadRequestException("Your graduation year (" + (studentYear.isEmpty() ? "N/A" : studentYear) + ") is not eligible for this job");
+                    }
                 }
             }
         }
@@ -118,11 +131,13 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         JobApplication saved = jobApplicationRepository.save(application);
 
         // Notify HR
-        notificationService.createNotification(
-                job.getPostedBy().getUser(),
-                student.getUser().getFullName() + " applied for your job posting: " + job.getTitle(),
-                NotificationType.JOB_ALERT
-        );
+        if (job.getPostedBy() != null) {
+            notificationService.createNotification(
+                    job.getPostedBy().getUser(),
+                    student.getUser().getFullName() + " applied for your job posting: " + job.getTitle(),
+                    NotificationType.JOB_ALERT
+            );
+        }
 
         auditLogService.log("APPLY_JOB", student.getUser(), "Applied for job: " + job.getTitle() + " (Application ID: " + saved.getId() + ")");
 

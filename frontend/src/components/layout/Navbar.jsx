@@ -4,12 +4,15 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 import { useNavigate } from "react-router-dom";
 import Logo from "../shared/Logo";
+import apiClient from "../../api/client";
 
 export const Navbar = ({ onMenuClick, showSidebarButton = true }) => {
   const { user, logout } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, showToast } = useNotifications();
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [broadcastText, setBroadcastText] = useState("");
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const navigate = useNavigate();
 
   const [theme, setTheme] = useState(() => {
@@ -59,6 +62,23 @@ export const Navbar = ({ onMenuClick, showSidebarButton = true }) => {
       navigate("/chat");
     } else if (notif.type === "event") {
       navigate("/events");
+    }
+  };
+
+  const handleSendBroadcast = async (e) => {
+    e.preventDefault();
+    if (!broadcastText.trim()) return;
+    setSendingBroadcast(true);
+    try {
+      await apiClient.post("/api/tpo/broadcast-notification", {
+        message: broadcastText.trim()
+      });
+      showToast("Notification broadcasted successfully!", "success");
+      setBroadcastText("");
+    } catch (err) {
+      showToast(err.message || "Failed to broadcast notification", "error");
+    } finally {
+      setSendingBroadcast(false);
     }
   };
 
@@ -119,6 +139,29 @@ export const Navbar = ({ onMenuClick, showSidebarButton = true }) => {
                   </button>
                 )}
               </div>
+
+              {user?.role === "tpo" && (
+                <form onSubmit={handleSendBroadcast} className="p-3 bg-red-50/10 border-b border-gray-100 flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={broadcastText}
+                      onChange={(e) => setBroadcastText(e.target.value)}
+                      placeholder="Broadcast announcement to students..."
+                      className="flex-1 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800 font-sans"
+                      disabled={sendingBroadcast}
+                    />
+                    <button
+                      type="submit"
+                      disabled={sendingBroadcast || !broadcastText.trim()}
+                      className="px-3 py-1.5 bg-brand-red hover:bg-brand-darkRed disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-bold rounded-lg transition-colors font-outfit"
+                    >
+                      {sendingBroadcast ? "..." : "Send"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-6 text-center text-gray-400 text-sm font-sans flex flex-col items-center gap-2">

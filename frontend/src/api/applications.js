@@ -40,7 +40,7 @@ const mapBackendAppToFrontend = (app) => {
 };
 
 export const applicationsApi = {
-  applyToJob: async (jobId, coverLetter) => {
+  applyToJob: async ({ jobId, coverLetter }) => {
     // 1. Check/Get primary resume
     let resumeId = null;
     try {

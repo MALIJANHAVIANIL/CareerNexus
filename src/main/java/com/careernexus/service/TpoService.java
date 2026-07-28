@@ -13,4 +13,5 @@ public interface TpoService {
     String generateReportCsv(String type);
     List<TpoDTO.StudentTpoResponse> getAllStudents();
     List<TpoDTO.AlumniTpoResponse> getAllAlumni();
+    void broadcastNotification(TpoDTO.BroadcastNotificationRequest request);
 }

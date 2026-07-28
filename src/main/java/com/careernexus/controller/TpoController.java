@@ -77,4 +77,10 @@ public class TpoController {
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(csvBytes);
     }
+
+    @PostMapping("/broadcast-notification")
+    public ResponseEntity<Void> broadcastNotification(@jakarta.validation.Valid @RequestBody TpoDTO.BroadcastNotificationRequest request) {
+        tpoService.broadcastNotification(request);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -47,6 +47,15 @@ export const mentorshipApi = {
     return mapBackendRequestToFrontend(res.data);
   },
 
+  sendMentorshipRequest: async ({ mentorId, type, message }) => {
+    const typeLabel = type === 'resume' ? 'Resume Review' : type === 'mock' ? 'Mock Interview' : type === 'project' ? 'Project Review' : 'Career Guidance';
+    const res = await apiClient.post("/api/mentorship/request", {
+      mentorId: parseInt(mentorId, 10),
+      message: `[Type: ${typeLabel}] ${message}`
+    });
+    return mapBackendRequestToFrontend(res.data);
+  },
+
   getRequests: async (role, userId) => {
     const endpoint = role === "alumni" ? "/api/mentorship/mentor/requests" : "/api/mentorship/student/requests";
     const res = await apiClient.get(endpoint);

@@ -44,9 +44,8 @@ public class Job {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @NotNull(message = "Poster (HR) is required")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hr_profile_id", nullable = false)
+    @JoinColumn(name = "hr_profile_id", nullable = true)
     private HrProfile postedBy;
 
     @NotBlank(message = "Location is required")
