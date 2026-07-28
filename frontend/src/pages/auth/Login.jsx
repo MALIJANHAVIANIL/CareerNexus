@@ -220,46 +220,6 @@ export const Login = () => {
             </Button>
           </form>
 
-          {/* Testing Credentials Quick autofills */}
-          <div className="mt-6 border-t border-gray-100 pt-4">
-            <p className="text-[9px] uppercase tracking-wider font-extrabold text-gray-400 mb-2.5 text-center">
-              Testing credentials (click to autofill)
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoAutofill("student")}
-                className="px-1 py-1.5 text-[10px] font-bold border border-red-100 bg-red-50/20 text-brand-red rounded-lg hover:bg-red-50 transition"
-              >
-                Student
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoAutofill("alumni")}
-                className="px-1 py-1.5 text-[10px] font-bold border border-gray-200 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-150 transition"
-              >
-                Alumni
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoAutofill("hr")}
-                className="px-1 py-1.5 text-[10px] font-bold border border-gray-200 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-150 transition"
-              >
-                HR
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoAutofill("tpo")}
-                className="px-1 py-1.5 text-[10px] font-bold border border-gray-200 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-155 transition"
-              >
-                TPO
-              </button>
-            </div>
-            <p className="text-[10px] text-gray-400 text-center mt-2">
-              Password for all is: <span className="font-bold text-gray-600">password</span>
-            </p>
-          </div>
-
           {role !== "tpo" && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-500 font-sans">
