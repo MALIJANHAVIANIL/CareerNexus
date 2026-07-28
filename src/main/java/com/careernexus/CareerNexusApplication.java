@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.careernexus.repository.AlumniProfileRepository;
 
 @SpringBootApplication
 @EnableJpaAuditing
@@ -28,7 +29,8 @@ public class CareerNexusApplication {
             PasswordEncoder passwordEncoder,
             AdminProfileRepository adminProfileRepository,
             CompanyRepository companyRepository,
-            AuditLogRepository auditLogRepository) {
+            AuditLogRepository auditLogRepository,
+            AlumniProfileRepository alumniProfileRepository) {
         return args -> {
             // Seed Admin (TPO)
             if (!userRepository.existsByEmail("tpo@college.edu")) {
@@ -107,6 +109,17 @@ public class CareerNexusApplication {
                     userRepository.save(u);
                 }
             });
+
+            System.out.println("--- DB DIAGNOSTICS ---");
+            userRepository.findAll().forEach(u -> {
+                System.out.println("User: " + u.getEmail() + " | Role: " + u.getRole() + " | Verified: " + u.getIsVerified() + " | Active: " + u.getIsActive());
+            });
+            System.out.println("Total Users: " + userRepository.count());
+            System.out.println("Alumni Users: " + userRepository.findAll().stream().filter(u -> u.getRole() == Role.ALUMNI).count());
+            System.out.println("Unverified Alumni Users: " + userRepository.findAll().stream().filter(u -> u.getRole() == Role.ALUMNI && !u.isVerified()).count());
+            System.out.println("Alumni Profiles: " + alumniProfileRepository.count());
+            System.out.println("Pending Alumni Profiles (query): " + alumniProfileRepository.findPendingAlumni().size());
+            System.out.println("----------------------");
         };
     }
 }

@@ -462,6 +462,16 @@ export const TPODashboard = () => {
           </p>
         </div>
 
+        {pendingAlumni.length > 0 && (
+          <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold rounded-xl flex items-center justify-between shadow-xs animate-pulse">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-600"></span>
+              <span>You have {pendingAlumni.length} pending alumni verification request(s) awaiting your review.</span>
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg">Action Required</span>
+          </div>
+        )}
+
         {/* Verification queue card */}
         <Card hover={false} className="bg-white border-gray-150 shadow-sm">
           <CardHeader className="bg-white border-b border-gray-100 py-4 px-5">
@@ -564,7 +574,7 @@ export const TPODashboard = () => {
                           <div className="text-[10px] text-gray-400 mt-0.5">{al.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-semibold text-gray-700">{al.role || "N/A"}</div>
+                          <div className="font-semibold text-gray-700">{al.designation || "N/A"}</div>
                           <div className="text-[10px] text-gray-400 mt-0.5">{al.company || "N/A"}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">

@@ -12,6 +12,7 @@ import com.careernexus.entity.AdminProfile;
 import com.careernexus.entity.AlumniProfile;
 import com.careernexus.entity.HrProfile;
 import com.careernexus.entity.Role;
+import com.careernexus.entity.NotificationType;
 import com.careernexus.entity.StudentProfile;
 import com.careernexus.entity.User;
 import com.careernexus.exception.BadRequestException;
@@ -34,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final StudentProfileRepository studentProfileRepository;
     private final AlumniProfileRepository alumniProfileRepository;
     private final AdminProfileRepository adminProfileRepository;
+    private final NotificationService notificationService;
 
     public AuthServiceImpl(
             UserRepository userRepository,
@@ -44,7 +46,8 @@ public class AuthServiceImpl implements AuthService {
             HrProfileRepository hrProfileRepository,
             StudentProfileRepository studentProfileRepository,
             AlumniProfileRepository alumniProfileRepository,
-            AdminProfileRepository adminProfileRepository) {
+            AdminProfileRepository adminProfileRepository,
+            NotificationService notificationService) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -55,6 +58,7 @@ public class AuthServiceImpl implements AuthService {
         this.studentProfileRepository = studentProfileRepository;
         this.alumniProfileRepository = alumniProfileRepository;
         this.adminProfileRepository = adminProfileRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -108,6 +112,24 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User savedUser = userRepository.save(user);
+
+        // Create verification notification for TPO Admins
+        if (savedUser.getRole() == Role.ALUMNI || savedUser.getRole() == Role.HR) {
+            String roleName = savedUser.getRole() == Role.ALUMNI ? "Alumni" : "HR";
+            userRepository.findAll().stream()
+                    .filter(u -> u.getRole() == Role.ADMIN)
+                    .forEach(admin -> {
+                        try {
+                            notificationService.createNotification(
+                                    admin,
+                                    "New " + roleName + " registered: " + savedUser.getFullName() + " (" + savedUser.getEmail() + ") - Approval Pending.",
+                                    NotificationType.INFO
+                            );
+                        } catch (Exception e) {
+                            // ignore to avoid breaking registration flow
+                        }
+                    });
+        }
 
         auditLogService.log(
                 "USER_REGISTER",
