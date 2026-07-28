@@ -101,6 +101,40 @@ public class TpoServiceImpl implements TpoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<TpoDTO.HrVerificationResponse> getPendingHr() {
+        return hrProfileRepository.findPendingHr().stream()
+                .map(hp -> new TpoDTO.HrVerificationResponse(
+                        hp.getId(),
+                        hp.getUser().getFullName(),
+                        hp.getUser().getEmail(),
+                        hp.getDesignation(),
+                        hp.getCompany() != null ? hp.getCompany().getName() : "TBD"
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void approveHr(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("HR user not found with ID: " + userId));
+        user.setIsVerified(true);
+        userRepository.save(user);
+        auditLogService.log("APPROVE_HR", user, "HR Recruiter approved by TPO");
+    }
+
+    @Override
+    @Transactional
+    public void rejectHr(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("HR user not found with ID: " + userId));
+        user.setIsActive(false);
+        userRepository.save(user);
+        auditLogService.log("REJECT_HR", user, "HR registration rejected/deactivated by TPO");
+    }
+
+    @Override
     @Transactional
     public void deactivateHr(Long userId) {
         User user = userRepository.findById(userId)

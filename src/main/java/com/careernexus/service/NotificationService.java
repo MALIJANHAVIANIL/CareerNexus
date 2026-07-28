@@ -10,4 +10,6 @@ public interface NotificationService {
     void createNotification(User recipient, String message, NotificationType type);
     List<NotificationDTO.NotificationResponse> getUserNotifications(Long userId);
     void markAsRead(Long userId, Long notificationId);
+    void createHrBroadcast(Long hrUserId, String message);
+    void scheduleOnlineTest(Long hrUserId, Long jobId, String testDate, String testTime, String testLink, String instructions);
 }

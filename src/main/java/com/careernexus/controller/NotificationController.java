@@ -32,4 +32,31 @@ public class NotificationController {
         notificationService.markAsRead(userDetails.getId(), id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/broadcast-hr")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('HR')")
+    public ResponseEntity<Void> broadcastHr(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody java.util.Map<String, String> payload) {
+        String msg = payload.get("message");
+        if (msg == null || msg.trim().isEmpty()) {
+            throw new com.careernexus.exception.BadRequestException("Message cannot be empty");
+        }
+        notificationService.createHrBroadcast(userDetails.getId(), msg);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/schedule-test")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('HR')")
+    public ResponseEntity<Void> scheduleTest(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody java.util.Map<String, Object> payload) {
+        Long jobId = Long.valueOf(payload.get("jobId").toString());
+        String testDate = payload.get("testDate").toString();
+        String testTime = payload.get("testTime").toString();
+        String testLink = payload.get("testLink").toString();
+        String instructions = payload.get("instructions").toString();
+        notificationService.scheduleOnlineTest(userDetails.getId(), jobId, testDate, testTime, testLink, instructions);
+        return ResponseEntity.ok().build();
+    }
 }

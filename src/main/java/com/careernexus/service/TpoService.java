@@ -8,6 +8,9 @@ public interface TpoService {
     List<TpoDTO.AlumniVerificationResponse> getPendingAlumni();
     void approveAlumni(Long userId);
     void rejectAlumni(Long userId);
+    List<TpoDTO.HrVerificationResponse> getPendingHr();
+    void approveHr(Long userId);
+    void rejectHr(Long userId);
     void deactivateHr(Long userId);
     void assignHr(TpoDTO.HrAssignmentRequest request);
     String generateReportCsv(String type);

@@ -20,6 +20,14 @@ public final class TpoDTO {
         String prn
     ) {}
 
+    public record HrVerificationResponse(
+        Long id,
+        String name,
+        String email,
+        String designation,
+        String companyName
+    ) {}
+
     public record HrAssignmentRequest(
         @jakarta.validation.constraints.NotNull(message = "HR User ID is required")
         Long hrUserId,

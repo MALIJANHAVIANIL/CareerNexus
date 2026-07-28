@@ -53,6 +53,23 @@ public class TpoController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/pending-hr")
+    public ResponseEntity<List<TpoDTO.HrVerificationResponse>> getPendingHr() {
+        return ResponseEntity.ok(tpoService.getPendingHr());
+    }
+
+    @PostMapping("/approve-hr/{userId}")
+    public ResponseEntity<Void> approveHr(@PathVariable Long userId) {
+        tpoService.approveHr(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reject-hr/{userId}")
+    public ResponseEntity<Void> rejectHr(@PathVariable Long userId) {
+        tpoService.rejectHr(userId);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/hr/deactivate/{userId}")
     public ResponseEntity<Void> deactivateHr(@PathVariable Long userId) {
         tpoService.deactivateHr(userId);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import apiClient from "../../api/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { jobsApi } from "../../api/jobs";
@@ -39,6 +40,20 @@ export const HRDashboard = () => {
   const [newJobSalary, setNewJobSalary] = useState("");
   const [newJobDesc, setNewJobDesc] = useState("");
 
+  // Test Scheduling State
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testJobId, setTestJobId] = useState("");
+  const [testDate, setTestDate] = useState("");
+  const [testTime, setTestTime] = useState("");
+  const [testLink, setTestLink] = useState("");
+  const [testInstructions, setTestInstructions] = useState("");
+  const [schedulingTest, setSchedulingTest] = useState(false);
+
+  // Announcement State
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [announcementMsg, setAnnouncementMsg] = useState("");
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+
   const companyName = user?.company || "Stripe";
 
   const loadHRData = async () => {
@@ -48,6 +63,9 @@ export const HRDashboard = () => {
         (j) => j.company.toLowerCase() === companyName.toLowerCase()
       );
       setJobs(companyJobs);
+      if (companyJobs.length > 0 && !testJobId) {
+        setTestJobId(companyJobs[0].id);
+      }
 
       const apps = await applicationsApi.getHRApplications(companyName);
       setApplicants(apps);
@@ -107,6 +125,56 @@ export const HRDashboard = () => {
       showToast(e.message || "Failed to update applicant.", "error");
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleScheduleTest = async (e) => {
+    e.preventDefault();
+    if (!testJobId || !testDate || !testTime || !testLink || !testInstructions) {
+      showToast("Please fill in all test schedule details", "warning");
+      return;
+    }
+    setSchedulingTest(true);
+    try {
+      await apiClient.post("/api/notifications/schedule-test", {
+        jobId: parseInt(testJobId, 10),
+        testDate,
+        testTime,
+        testLink,
+        instructions: testInstructions
+      });
+      showToast("Online Test scheduled and alert sent to applicants!", "success");
+      setShowTestModal(false);
+      // Reset forms
+      setTestDate("");
+      setTestTime("");
+      setTestLink("");
+      setTestInstructions("");
+    } catch (err) {
+      showToast(err.message || "Failed to schedule test.", "error");
+    } finally {
+      setSchedulingTest(false);
+    }
+  };
+
+  const handleSendAnnouncement = async (e) => {
+    e.preventDefault();
+    if (!announcementMsg.trim()) {
+      showToast("Please enter announcement message", "warning");
+      return;
+    }
+    setSendingAnnouncement(true);
+    try {
+      await apiClient.post("/api/notifications/broadcast-hr", {
+        message: announcementMsg.trim()
+      });
+      showToast("Announcement broadcasted successfully to all students!", "success");
+      setShowAnnouncementModal(false);
+      setAnnouncementMsg("");
+    } catch (err) {
+      showToast(err.message || "Failed to broadcast announcement.", "error");
+    } finally {
+      setSendingAnnouncement(false);
     }
   };
 
@@ -318,6 +386,34 @@ export const HRDashboard = () => {
 
         {/* Right Side: Manage Postings / Job List */}
         <div className="space-y-4">
+          {/* Recruiter Tools Card */}
+          <Card hover={false} className="bg-white border-gray-150 shadow-sm">
+            <CardHeader className="bg-white border-b border-gray-100 py-3.5 px-4 flex items-center gap-2">
+              <Users size={16} className="text-brand-red" />
+              <h3 className="text-sm font-bold text-gray-900 font-outfit uppercase tracking-wider">Recruiter Tools</h3>
+            </CardHeader>
+            <CardBody className="p-4 space-y-3">
+              <Button
+                variant="outline"
+                fullWidth
+                size="sm"
+                onClick={() => setShowTestModal(true)}
+                className="justify-center text-xs font-bold border-gray-200 text-gray-700 hover:bg-gray-50 py-2"
+              >
+                Schedule Online Test
+              </Button>
+              <Button
+                variant="outline"
+                fullWidth
+                size="sm"
+                onClick={() => setShowAnnouncementModal(true)}
+                className="justify-center text-xs font-bold border-gray-200 text-gray-700 hover:bg-gray-50 py-2"
+              >
+                Broadcast Announcement
+              </Button>
+            </CardBody>
+          </Card>
+
           <Card hover={false}>
             <CardHeader className="bg-white">
               <h3 className="text-base font-bold text-gray-900 font-outfit">My Postings</h3>
@@ -422,6 +518,117 @@ export const HRDashboard = () => {
                 </Button>
                 <Button type="submit" size="sm" loading={loading} className="bg-brand-red text-white hover:bg-brand-darkRed">
                   Create Post
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showTestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-xs" onClick={() => setShowTestModal(false)} />
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-150 z-10 p-6 flex flex-col gap-4 animate-slide-up text-gray-800">
+            <h3 className="text-lg font-bold text-gray-955 font-outfit">Schedule Online Assessment / Test</h3>
+            <form onSubmit={handleScheduleTest} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1 font-outfit uppercase">Select Job Opening</label>
+                <select
+                  required
+                  value={testJobId}
+                  onChange={(e) => setTestJobId(e.target.value)}
+                  className="block w-full border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                >
+                  {jobs.map((j) => (
+                    <option key={j.id} value={j.id}>{j.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1 font-outfit uppercase">Test Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={testDate}
+                    onChange={(e) => setTestDate(e.target.value)}
+                    className="block w-full border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1 font-outfit uppercase">Test Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={testTime}
+                    onChange={(e) => setTestTime(e.target.value)}
+                    className="block w-full border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1 font-outfit uppercase">Test Link (HackerRank/Google Forms/etc)</label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://hackerrank.com/test-id"
+                  value={testLink}
+                  onChange={(e) => setTestLink(e.target.value)}
+                  className="block w-full border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red bg-white text-gray-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1 font-outfit uppercase">Instructions / Details</label>
+                <textarea
+                  required
+                  rows="3"
+                  placeholder="Describe test rules, duration, and details..."
+                  value={testInstructions}
+                  onChange={(e) => setTestInstructions(e.target.value)}
+                  className="block w-full border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red font-sans bg-white text-gray-800"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                <Button variant="outline" size="sm" onClick={() => setShowTestModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" loading={schedulingTest} className="bg-brand-red text-white hover:bg-brand-darkRed">
+                  Schedule Test & Notify
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAnnouncementModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-xs" onClick={() => setShowAnnouncementModal(false)} />
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-150 z-10 p-6 flex flex-col gap-4 animate-slide-up text-gray-800">
+            <h3 className="text-lg font-bold text-gray-955 font-outfit">Broadcast Announcement to Students</h3>
+            <form onSubmit={handleSendAnnouncement} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1 font-outfit uppercase">Message</label>
+                <textarea
+                  required
+                  rows="4"
+                  placeholder="Type the message/announcement you want to broadcast to all students..."
+                  value={announcementMsg}
+                  onChange={(e) => setAnnouncementMsg(e.target.value)}
+                  className="block w-full border-gray-300 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-brand-red font-sans bg-white text-gray-800"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                <Button variant="outline" size="sm" onClick={() => setShowAnnouncementModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" loading={sendingAnnouncement} className="bg-brand-red text-white hover:bg-brand-darkRed">
+                  Broadcast Message
                 </Button>
               </div>
             </form>

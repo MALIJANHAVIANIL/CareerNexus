@@ -36,6 +36,7 @@ export const TPODashboard = () => {
   const [companySearch, setCompanySearch] = useState("");
 
   const [pendingAlumni, setPendingAlumni] = useState([]);
+  const [pendingHr, setPendingHr] = useState([]);
   const [students, setStudents] = useState([]);
   const [allAlumni, setAllAlumni] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -88,6 +89,9 @@ export const TPODashboard = () => {
 
       const alumniRes = await apiClient.get("/api/tpo/pending-alumni");
       setPendingAlumni(alumniRes.data || []);
+
+      const hrRes = await apiClient.get("/api/tpo/pending-hr");
+      setPendingHr(hrRes.data || []);
 
       const [companiesRes, jobsRes, eventsRes, studentsRes, allAlumniRes, logsRes] = await Promise.all([
         apiClient.get("/api/companies"),
@@ -169,6 +173,26 @@ export const TPODashboard = () => {
       loadTpoData();
     } catch (err) {
       showToast(err.message || "Failed to reject alumni", "error");
+    }
+  };
+
+  const handleApproveHr = async (hrId, name) => {
+    try {
+      await apiClient.post(`/api/tpo/approve-hr/${hrId}`);
+      showToast(`HR Recruiter ${name} has been verified and approved!`, "success");
+      loadTpoData();
+    } catch (err) {
+      showToast(err.message || "Failed to approve HR", "error");
+    }
+  };
+
+  const handleRejectHr = async (hrId, name) => {
+    try {
+      await apiClient.post(`/api/tpo/reject-hr/${hrId}`);
+      showToast(`HR registration for ${name} declined.`, "info");
+      loadTpoData();
+    } catch (err) {
+      showToast(err.message || "Failed to reject HR", "error");
     }
   };
 
@@ -626,6 +650,78 @@ export const TPODashboard = () => {
             <PlusCircle size={15} /> Add Company
           </Button>
         </div>
+
+        {pendingHr.length > 0 && (
+          <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold rounded-xl flex items-center justify-between shadow-xs animate-pulse">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-600"></span>
+              <span>You have {pendingHr.length} pending HR verification request(s) awaiting your review.</span>
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg">Action Required</span>
+          </div>
+        )}
+
+        {/* HR Verification queue card */}
+        <Card hover={false} className="bg-white border-gray-150 shadow-sm">
+          <CardHeader className="bg-white border-b border-gray-100 py-4 px-5">
+            <h3 className="text-sm font-bold text-gray-900 font-outfit uppercase tracking-wider">
+              Pending HR Registrations ({pendingHr.length})
+            </h3>
+          </CardHeader>
+          <CardBody className="p-0">
+            {pendingHr.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 text-xs flex flex-col items-center gap-2">
+                <CheckCircle size={28} className="text-emerald-500 opacity-75" />
+                <p className="font-semibold text-gray-700">HR Verification Queue Empty!</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-150 text-xs">
+                  <thead className="bg-gray-50/50">
+                    <tr>
+                      <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase font-outfit">HR Recruiter</th>
+                      <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase font-outfit">Designation</th>
+                      <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase font-outfit">Company</th>
+                      <th className="px-6 py-3 text-right font-bold text-gray-500 uppercase font-outfit">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {pendingHr.map((hr) => (
+                      <tr key={hr.id} className="hover:bg-gray-50/50 transition">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-bold text-gray-955 font-outfit">{hr.name}</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">{hr.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">
+                          {hr.designation}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-700">
+                          {hr.companyName || "TBD"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right font-semibold">
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => handleApproveHr(hr.id, hr.name)}
+                              className="px-3 py-1 bg-brand-red hover:bg-brand-darkRed text-white text-[10px] font-bold rounded-lg transition-all"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectHr(hr.id, hr.name)}
+                              className="px-3 py-1 border border-gray-200 hover:bg-red-50 hover:text-red-600 text-gray-600 text-[10px] font-bold rounded-lg transition-all"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardBody>
+        </Card>
 
         <div className="flex justify-end text-gray-800">
           <div className="relative w-full sm:w-72">
@@ -1426,6 +1522,69 @@ export const TPODashboard = () => {
                               </button>
                               <button
                                 onClick={() => handleRejectAlumni(al.id, al.name)}
+                                className="px-3 py-1 border border-gray-200 hover:bg-red-50 hover:text-red-600 text-gray-600 text-[10px] font-bold rounded-lg transition-all"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Pending HR Approvals Table */}
+          <Card hover={false} className="bg-white border-gray-150 shadow-sm">
+            <CardHeader className="bg-white border-b border-gray-100 flex justify-between items-center py-4 px-5">
+              <h3 className="text-sm font-bold text-gray-900 font-outfit uppercase tracking-wider flex items-center gap-1.5">
+                <Building size={16} className="text-brand-red" /> Pending HR Verifications ({pendingHr.length})
+              </h3>
+            </CardHeader>
+            <CardBody className="p-0">
+              {pendingHr.length === 0 ? (
+                <div className="p-10 text-center text-gray-400 text-sm flex flex-col items-center gap-2">
+                  <CheckCircle size={32} className="text-emerald-500 opacity-75" />
+                  <p className="font-semibold text-gray-700">HR Verification Queue Empty!</p>
+                  <p className="text-xs">No pending HR recruiter credentials requiring verification at this time.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-150 text-xs">
+                    <thead className="bg-gray-50/50">
+                      <tr>
+                        <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase font-outfit">HR Recruiter</th>
+                        <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase font-outfit">Designation</th>
+                        <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase font-outfit">Company</th>
+                        <th className="px-6 py-3 text-right font-bold text-gray-500 uppercase font-outfit">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {pendingHr.map((hr) => (
+                        <tr key={hr.id} className="hover:bg-gray-50/50 transition">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="font-bold text-gray-950 font-outfit">{hr.name}</div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">{hr.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-600">
+                            {hr.designation}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-700">
+                            {hr.companyName || "TBD"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right font-semibold">
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => handleApproveHr(hr.id, hr.name)}
+                                className="px-3 py-1 bg-brand-red hover:bg-brand-darkRed text-white text-[10px] font-bold rounded-lg transition-all"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleRejectHr(hr.id, hr.name)}
                                 className="px-3 py-1 border border-gray-200 hover:bg-red-50 hover:text-red-600 text-gray-600 text-[10px] font-bold rounded-lg transition-all"
                               >
                                 Reject
