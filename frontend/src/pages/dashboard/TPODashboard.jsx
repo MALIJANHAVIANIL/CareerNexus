@@ -11,6 +11,7 @@ import {
   Calendar,
   BarChart3,
   Sparkles,
+  X,
   CheckCircle,
   XCircle,
   PlusCircle,
@@ -21,7 +22,10 @@ import {
   Github,
   Globe,
   Share2,
-  Search
+  Search,
+  Plus,
+  Mic,
+  AudioLines
 } from "lucide-react";
 import Card, { CardBody, CardHeader } from "../../components/common/Card";
 import Button from "../../components/common/Button";
@@ -77,6 +81,20 @@ export const TPODashboard = () => {
   });
   const [savingJob, setSavingJob] = useState(false);
 
+  // AI Assistant States
+  const [showAiDrawer, setShowAiDrawer] = useState(false);
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiApiKey, setAiApiKey] = useState(localStorage.getItem("cn_gemini_api_key") || "");
+  const [tempApiKey, setTempApiKey] = useState(localStorage.getItem("cn_gemini_api_key") || "");
+  const [aiChatHistory, setAiChatHistory] = useState([
+    {
+      sender: "ai",
+      message: "Hello! I am your AI Placement Assistant. Ask me anything about student placements, package stats, or company hiring trends!",
+      type: "help"
+    }
+  ]);
+  const [aiLoading, setAiLoading] = useState(false);
+
   const loadTpoData = async () => {
     try {
       const statsRes = await apiClient.get("/api/tpo/stats");
@@ -128,15 +146,21 @@ export const TPODashboard = () => {
       setAllAlumni(allAlumniData);
       setLogs(logsData);
 
-      const driveList = companiesData.map(comp => {
-        const matchingJobs = jobsData.filter(job => job.companyName?.toLowerCase() === comp.name?.toLowerCase());
-        const count = matchingJobs.length;
-        return {
-          name: comp.name,
-          jobsCount: count,
-          status: count > 0 ? "Active Drive" : "Recruiting"
-        };
-      });
+      const defaultPartnerNames = ["google india", "stripe", "tcs", "capgemini", "infosys", "jpmorgan chase"];
+      const driveList = companiesData
+        .filter(comp => 
+          defaultPartnerNames.includes(comp.name?.toLowerCase()) || 
+          jobsData.some(job => job.companyName?.toLowerCase() === comp.name?.toLowerCase())
+        )
+        .map(comp => {
+          const matchingJobs = jobsData.filter(job => job.companyName?.toLowerCase() === comp.name?.toLowerCase());
+          const count = matchingJobs.length;
+          return {
+            name: comp.name,
+            jobsCount: count,
+            status: count > 0 ? "Active Drive" : "Recruiting"
+          };
+        });
 
       setPartners(driveList.sort((a, b) => b.jobsCount - a.jobsCount).slice(0, 6));
     } catch (err) {
@@ -268,6 +292,54 @@ export const TPODashboard = () => {
       setSavingEvent(false);
     }
   };
+
+  const handleSendAiQuery = async (queryText = null) => {
+    const text = (queryText && typeof queryText === "string") ? queryText : aiQuery;
+    if (!text || !text.trim()) return;
+
+    const userMessage = { sender: "user", message: text };
+    const historyToSend = aiChatHistory.map(h => ({
+      sender: h.sender,
+      message: h.message
+    }));
+
+    setAiChatHistory((prev) => [...prev, userMessage]);
+    
+    if (!queryText || typeof queryText !== "string") {
+      setAiQuery("");
+    }
+    
+    setAiLoading(true);
+
+    try {
+      const res = await apiClient.post("/api/tpo/ai-query", { 
+        query: text, 
+        apiKey: aiApiKey,
+        history: historyToSend
+      });
+      const aiResponse = {
+        sender: "ai",
+        message: res.data.message,
+        title: res.data.title,
+        type: res.data.type,
+        data: res.data.data
+      };
+      setAiChatHistory((prev) => [...prev, aiResponse]);
+    } catch (err) {
+      setAiChatHistory((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          message: err.response?.data?.message || "Failed to process query. Please try again.",
+          type: "error"
+        }
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+
 
   const openJobModal = () => {
     const defaultDeadline = new Date();
@@ -1666,6 +1738,211 @@ export const TPODashboard = () => {
         </div>
 
       </div>
+
+      {/* AI Assistant Floating Button */}
+      <button
+        onClick={() => setShowAiDrawer(true)}
+        className="fixed bottom-6 right-6 bg-brand-red hover:bg-brand-darkRed text-white font-bold py-3.5 px-5 rounded-full shadow-2xl z-40 flex items-center gap-2 transition-all hover:scale-105 border border-red-500/20 active:scale-95"
+      >
+        <Sparkles size={18} className="animate-pulse" />
+        <span className="text-xs uppercase tracking-wider font-outfit">AI Placement Assistant</span>
+      </button>
+
+      {/* AI Assistant Sliding Drawer */}
+      {showAiDrawer && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="absolute inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setShowAiDrawer(false)}
+          />
+          
+          <div className="relative w-full max-w-md bg-slate-900 border-l border-gray-800 h-full shadow-2xl flex flex-col justify-between z-10 animate-slide-left text-gray-100">
+            {/* Header */}
+            <div className="p-4 border-b border-gray-800 bg-slate-950 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles size={20} className="text-brand-red animate-pulse" />
+                <div>
+                  <h3 className="text-sm font-bold font-outfit uppercase tracking-wider text-white">AI Placement Assistant</h3>
+                  <p className="text-[10px] text-gray-400 font-sans">Query student placement databases instantly</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAiDrawer(false)}
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* API Key configuration input */}
+            <div className="p-3 bg-slate-950/70 border-b border-gray-800 flex flex-col gap-2">
+              <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                <span>Gemini API Key Setting</span>
+                <span className={aiApiKey ? "text-emerald-500 font-bold" : "text-amber-500 font-bold"}>
+                  {aiApiKey ? "Active/Configured" : "Missing / Paste Below"}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={tempApiKey}
+                  onChange={(e) => setTempApiKey(e.target.value)}
+                  placeholder="Paste GEMINI_API_KEY here..."
+                  className="flex-1 bg-slate-900 border border-gray-800 rounded-lg px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-brand-red text-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAiApiKey(tempApiKey);
+                    localStorage.setItem("cn_gemini_api_key", tempApiKey);
+                    if (tempApiKey) {
+                      showToast("Gemini API Key saved locally!", "success");
+                    } else {
+                      showToast("Gemini API Key cleared!", "info");
+                    }
+                  }}
+                  className="px-3 py-1 bg-brand-red hover:bg-brand-darkRed text-white rounded-lg text-[10px] font-extrabold transition-all"
+                >
+                  Save
+                </button>
+                {aiApiKey && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempApiKey("");
+                      setAiApiKey("");
+                      localStorage.removeItem("cn_gemini_api_key");
+                      showToast("Gemini API Key cleared!", "info");
+                    }}
+                    className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg text-[9px] font-bold transition-all"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Chat History */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/40">
+              {aiChatHistory.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs font-sans shadow-md ${
+                      msg.sender === "user"
+                        ? "bg-brand-red text-white rounded-tr-xs"
+                        : msg.type === "error"
+                        ? "bg-red-950/80 border border-red-900/50 text-red-200 rounded-tl-xs"
+                        : "bg-slate-950 border border-gray-800 text-gray-200 rounded-tl-xs"
+                    }`}
+                  >
+                    {msg.title && (
+                      <div className="font-extrabold text-[11px] uppercase tracking-wider text-brand-red mb-1 border-b border-gray-800/50 pb-1">
+                        {msg.title}
+                      </div>
+                    )}
+                    
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                    
+                    {msg.data && msg.data.length > 0 && (
+                      <div className="mt-3 overflow-x-auto border border-gray-800 rounded-lg max-h-60 bg-slate-950">
+                        <table className="min-w-full divide-y divide-gray-800 text-[10px]">
+                          <thead className="bg-gray-900/50 sticky top-0">
+                            <tr>
+                              {Object.keys(msg.data[0]).map((key) => (
+                                <th key={key} className="px-3 py-2 text-left font-bold text-gray-400 uppercase tracking-wider">
+                                  {key}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-900 bg-slate-950/40">
+                            {msg.data.map((row, rIdx) => (
+                              <tr key={rIdx} className="hover:bg-gray-900/30 transition">
+                                {Object.values(row).map((val, cIdx) => (
+                                  <td key={cIdx} className="px-3 py-2 whitespace-nowrap text-gray-300 font-medium">
+                                    {val}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[8px] text-gray-500 font-medium mt-1 uppercase tracking-widest px-1">
+                    {msg.sender === "user" ? "You" : "AI Assistant"}
+                  </span>
+                </div>
+              ))}
+              
+              {aiLoading && (
+                <div className="flex flex-col items-start">
+                  <div className="bg-slate-950 border border-gray-800 rounded-2xl px-4 py-3 rounded-tl-xs flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+
+            {/* Input form */}
+            <div className="p-4 border-t border-gray-800 bg-slate-950 flex flex-col gap-2 items-center">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendAiQuery();
+                }}
+                className="w-full relative flex items-center bg-white rounded-full border border-gray-200 pl-4 pr-1.5 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-brand-red transition-all"
+              >
+                {/* Plus Button */}
+                <button
+                  type="button"
+                  className="text-gray-400 hover:text-gray-600 transition p-1 mr-1 flex items-center justify-center"
+                >
+                  <Plus size={16} />
+                </button>
+
+                {/* Input Field */}
+                <input
+                  type="text"
+                  value={aiQuery}
+                  onChange={(e) => setAiQuery(e.target.value)}
+                  placeholder="Ask anything"
+                  disabled={aiLoading}
+                  className="flex-1 bg-transparent border-none outline-none text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-0 px-1"
+                />
+
+                {/* Microphone Icon */}
+                <button
+                  type="button"
+                  className="text-gray-400 hover:text-gray-600 transition p-1 mr-2 flex items-center justify-center"
+                >
+                  <Mic size={16} />
+                </button>
+
+                {/* Send Button */}
+                <button
+                  type="submit"
+                  disabled={aiLoading}
+                  className="w-8 h-8 rounded-full bg-black hover:bg-gray-800 flex items-center justify-center text-white transition active:scale-95 shadow-md flex-shrink-0"
+                >
+                  <AudioLines size={14} className={aiLoading ? "animate-spin" : "animate-pulse"} />
+                </button>
+              </form>
+              <span className="text-[9px] text-gray-500 font-sans tracking-wide">
+                CareerNexus AI can make mistakes. Verify important info.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

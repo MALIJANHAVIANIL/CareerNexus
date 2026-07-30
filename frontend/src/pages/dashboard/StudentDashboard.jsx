@@ -27,7 +27,7 @@ import { profileApi } from "../../api/profile";
 export const StudentDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { showToast } = useNotifications();
+  const { showToast, notifications } = useNotifications();
 
   // Calculate profile completeness score
   const [profileScore, setProfileScore] = useState(0);
@@ -40,7 +40,6 @@ export const StudentDashboard = () => {
   const [recentJobs, setRecentJobs] = useState([]);
   const [recommendedMentors, setRecommendedMentors] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [successStories, setSuccessStories] = useState([]);
 
   const loadDashboardData = async () => {
@@ -64,10 +63,6 @@ export const StudentDashboard = () => {
       // 4. Fetch chat conversations for message count
       const convs = await chatApi.getConversations();
       setUnreadMessages(convs.length);
-
-      // 5. Fetch notifications
-      const notifs = await notificationsApi.getNotifications();
-      setNotifications(notifs.slice(0, 3));
 
       // 6. Fetch profile for completeness score calculation
       try {
@@ -413,7 +408,7 @@ export const StudentDashboard = () => {
               {notifications.length === 0 ? (
                 <div className="text-center py-6 text-xs text-gray-400 font-outfit">No notifications.</div>
               ) : (
-                notifications.map((notif, idx) => {
+                notifications.slice(0, 3).map((notif, idx) => {
                   const typeLower = notif.type?.toLowerCase();
                   const isJob = typeLower === 'job' || typeLower === 'recruitment';
                   const isMentor = typeLower === 'mentor' || typeLower === 'mentorship';

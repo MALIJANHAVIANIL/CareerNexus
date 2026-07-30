@@ -19,6 +19,7 @@ public class TpoServiceImpl implements TpoService {
     private final HrProfileRepository hrProfileRepository;
     private final CompanyRepository companyRepository;
     private final JobApplicationRepository jobApplicationRepository;
+    private final JobRepository jobRepository;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
 
@@ -29,6 +30,7 @@ public class TpoServiceImpl implements TpoService {
             HrProfileRepository hrProfileRepository,
             CompanyRepository companyRepository,
             JobApplicationRepository jobApplicationRepository,
+            JobRepository jobRepository,
             AuditLogService auditLogService,
             NotificationService notificationService) {
 
@@ -38,6 +40,7 @@ public class TpoServiceImpl implements TpoService {
         this.hrProfileRepository = hrProfileRepository;
         this.companyRepository = companyRepository;
         this.jobApplicationRepository = jobApplicationRepository;
+        this.jobRepository = jobRepository;
         this.auditLogService = auditLogService;
         this.notificationService = notificationService;
     }
@@ -50,7 +53,14 @@ public class TpoServiceImpl implements TpoService {
         // Count unique students with status SELECTED
         long placedStudents = studentProfileRepository.countUniqueStudentsWithApplicationStatus(JobApplicationStatus.SELECTED);
 
-        long activeRecruiters = companyRepository.count();
+        long activeRecruiters = companyRepository.findAll().stream()
+                .filter(c -> {
+                    boolean hasJob = jobRepository.findAll().stream().anyMatch(j -> j.getCompany().getId().equals(c.getId()));
+                    boolean isDefault = List.of("google india", "stripe", "tcs", "capgemini", "infosys", "jpmorgan chase")
+                            .contains(c.getName().toLowerCase());
+                    return hasJob || isDefault;
+                })
+                .count();
 
         long approvedMentors = alumniProfileRepository.countVerifiedAlumni();
 
